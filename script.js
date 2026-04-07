@@ -367,6 +367,19 @@ function desenharFundo() {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
+// Função utilitária para ajustar brilho de uma cor hex (para o sombreamento dinâmico)
+function ajustarCor(corHex, fator) {
+    let r = parseInt(corHex.substring(1, 3), 16);
+    let g = parseInt(corHex.substring(3, 5), 16);
+    let b = parseInt(corHex.substring(5, 7), 16);
+
+    r = Math.min(255, Math.max(0, Math.floor(r * fator)));
+    g = Math.min(255, Math.max(0, Math.floor(g * fator)));
+    b = Math.min(255, Math.max(0, Math.floor(b * fator)));
+
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
 function desenharMago() {
     const centroX = canvas.width / 2;
     const centroY = canvas.height / 2;
@@ -375,38 +388,57 @@ function desenharMago() {
     ctx.translate(centroX, centroY);
 
     // Animação de idle (flutuar)
-    const floatY = Math.sin(lastTime * 0.002) * 10;
+    const floatY = Math.sin(lastTime * 0.002) * 5;
     ctx.translate(0, floatY);
 
     ctx.scale(magoScale, magoScale);
 
-    // Desenhar um mago simplificado (Pixel Art style procedimental)
-    const tamanhoPixel = 8;
-    const corPrincipal = coresElemento[elementoSelecionado];
+    // Desenhar o mago baseado na referência em 16x16 pixel art scale
+    const ps = 6; // pixel size
+    const offsetX = -8 * ps; // Centralizar
+    const offsetY = -8 * ps;
 
-    ctx.fillStyle = corPrincipal;
-    // Corpo (manto)
-    ctx.fillRect(-3 * tamanhoPixel, -2 * tamanhoPixel, 6 * tamanhoPixel, 8 * tamanhoPixel);
-    ctx.fillRect(-4 * tamanhoPixel, 0, 8 * tamanhoPixel, 6 * tamanhoPixel);
+    const C = coresElemento[elementoSelecionado]; // Cor principal do elemento
+    const D = ajustarCor(C, 0.7); // Cor escura do elemento (sombra)
+    const L = ajustarCor(C, 1.3); // Cor clara do elemento (brilho)
+    const S = '#f4a460'; // Skin/Pele
+    const S_D = '#cd853f'; // Skin Dark
+    const W = '#ffffff'; // White/Beard
+    const W_D = '#d3d3d3'; // White Dark/Beard shadow
+    const B = '#000000'; // Black/Eyes
+    const T = '#8b4513'; // Trunk/Wood staff
+    const T_D = '#5c4033'; // Trunk Dark
+    const X = null; // Vazio
 
-    // Capuz
-    ctx.fillStyle = '#222';
-    ctx.fillRect(-2 * tamanhoPixel, -5 * tamanhoPixel, 4 * tamanhoPixel, 4 * tamanhoPixel);
-    ctx.fillRect(-3 * tamanhoPixel, -4 * tamanhoPixel, 6 * tamanhoPixel, 3 * tamanhoPixel);
+    // Matriz 16x16 que desenha o mago
+    const sprite = [
+        [X, X, X, X, X, X, X, C, C, C, X, X, X, X, X, X],
+        [X, X, X, X, X, C, C, C, C, L, C, C, X, X, X, X],
+        [X, X, X, X, C, C, C, C, C, C, L, C, C, X, X, X],
+        [X, X, X, X, C, C, S, S, S, S, S, C, C, C, X, X],
+        [X, L, X, X, C, S, B, S, B, S, W, C, C, X, X, X],
+        [X, L, L, X, C, S, S, S, S, S, W, W, C, C, X, X],
+        [X, T, X, X, X, W, W, W, W, W, W, C, C, X, X, X],
+        [X, T, X, X, X, W, W, W, W, W, C, C, C, X, X, X],
+        [X, S, S, X, C, W, W, W, W, D, C, C, X, X, X, X],
+        [X, T, T, C, C, W, W, W, D, D, C, C, C, X, X, X],
+        [X, T, X, C, C, C, W, W, D, C, C, L, C, X, X, X],
+        [X, T, X, D, C, C, W, C, D, C, C, L, C, X, X, X],
+        [X, T, T, D, D, C, C, C, D, D, C, C, S, S, X, X],
+        [X, T, X, X, C, C, C, C, C, C, D, X, X, X, X, X],
+        [T, T, X, X, X, C, C, C, C, C, D, X, X, X, X, X],
+        [T, X, X, X, X, C, C, C, C, C, D, X, X, X, X, X]
+    ];
 
-    // Rosto / Olhos (brilhantes baseados no elemento)
-    ctx.fillStyle = '#000';
-    ctx.fillRect(-2 * tamanhoPixel, -3 * tamanhoPixel, 4 * tamanhoPixel, 2 * tamanhoPixel);
-    ctx.fillStyle = corPrincipal; // Olhos
-    ctx.fillRect(-1.5 * tamanhoPixel, -2.5 * tamanhoPixel, 1 * tamanhoPixel, 1 * tamanhoPixel);
-    ctx.fillRect(0.5 * tamanhoPixel, -2.5 * tamanhoPixel, 1 * tamanhoPixel, 1 * tamanhoPixel);
-
-    // Varinha
-    ctx.fillStyle = '#8b4513';
-    ctx.fillRect(3 * tamanhoPixel, -1 * tamanhoPixel, 1 * tamanhoPixel, 7 * tamanhoPixel);
-    // Cristal da varinha
-    ctx.fillStyle = corPrincipal;
-    ctx.fillRect(2.5 * tamanhoPixel, -3 * tamanhoPixel, 2 * tamanhoPixel, 2 * tamanhoPixel);
+    for (let y = 0; y < 16; y++) {
+        for (let x = 0; x < 16; x++) {
+            const cor = sprite[y][x];
+            if (cor !== null) {
+                ctx.fillStyle = cor;
+                ctx.fillRect(offsetX + x * ps, offsetY + y * ps, ps, ps);
+            }
+        }
+    }
 
     ctx.restore();
 }
