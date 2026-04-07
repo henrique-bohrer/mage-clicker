@@ -975,6 +975,20 @@ function comprarUpgrade(index) {
     }
 }
 
+function converterManaEmDiamantes() {
+    const custo = 1000000;
+    const recompensa = 10;
+    if (mana >= custo) {
+        mana -= custo;
+        diamantes += recompensa;
+        playSound('upgrade');
+        criarFloatingText(`+${recompensa} Diamantes`, canvas.width/2, canvas.height/2);
+        atualizarUI();
+    } else {
+        alert("Mana insuficiente! Você precisa de 1 Milhão de Mana.");
+    }
+}
+
 function atualizarLojaUI() {
     upgrades.forEach((up, index) => {
         const btn = document.getElementById(`upgrade-${index}`);
