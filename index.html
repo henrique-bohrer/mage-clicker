@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clicker de Magos Elementais</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- Tela de Seleção de Elemento -->
+        <div id="selection-screen" class="screen">
+            <h1>Escolha seu Elemento</h1>
+            <div class="element-grid">
+                <button class="element-btn" data-element="fogo" style="--btn-color: #ff4500;">Fogo</button>
+                <button class="element-btn" data-element="agua" style="--btn-color: #1e90ff;">Água</button>
+                <button class="element-btn" data-element="ar" style="--btn-color: #00fa9a;">Ar</button>
+                <button class="element-btn" data-element="eletricidade" style="--btn-color: #ffd700;">Eletricidade</button>
+                <button class="element-btn" data-element="terra" style="--btn-color: #8b4513;">Terra</button>
+                <button class="element-btn" data-element="luz" style="--btn-color: #ffffff; color: #000;">Luz</button>
+            </div>
+        </div>
+
+        <!-- Tela do Jogo Principal -->
+        <div id="game-screen" class="screen hidden">
+            <header>
+                <div class="stats">
+                    <p>Mana: <span id="mana-display">0</span></p>
+                    <p>Mana/s: <span id="mana-per-sec-display">0</span></p>
+                    <p>Prestige: <span id="prestige-display">1</span>x</p>
+                </div>
+                <button id="rebirth-btn" class="hidden">Renascer (1e12 Mana)</button>
+            </header>
+
+            <main>
+                <div class="canvas-container">
+                    <canvas id="gameCanvas" width="400" height="400"></canvas>
+                </div>
+
+                <aside class="shop">
+                    <h2>Loja</h2>
+                    <div id="upgrades-container">
+                        <!-- Upgrades vão aqui via JS -->
+                    </div>
+                </aside>
+            </main>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
