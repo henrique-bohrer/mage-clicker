@@ -128,9 +128,48 @@ header {
     margin-bottom: 20px;
 }
 
+.stats {
+    display: flex;
+    gap: 20px;
+}
+
+.stat-column {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
 .stats p {
     margin: 5px 0;
-    font-size: 12px;
+    font-size: 10px;
+}
+
+.rebirth-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    width: 150px;
+}
+
+.rebirth-progress-bg {
+    width: 100%;
+    height: 10px;
+    background-color: #333;
+    border: 2px solid #555;
+    position: relative;
+}
+
+#rebirth-progress-bar {
+    height: 100%;
+    width: 0%;
+    background-color: #dda0dd;
+    transition: width 0.3s;
+}
+
+#rebirth-percentage {
+    font-size: 8px;
+    color: #dda0dd;
 }
 
 main {
@@ -159,21 +198,108 @@ canvas {
     object-fit: contain;
 }
 
-.shop {
+.sidebar {
     width: 300px;
     background-color: var(--panel-bg);
     border: 4px solid var(--border-color);
-    padding: 15px;
     display: flex;
     flex-direction: column;
-    overflow-y: auto;
-    min-height: 0; /* Permite scroll no conteúdo */
+    min-height: 0;
 }
 
-.shop h2 {
-    font-size: 16px;
-    text-align: center;
-    margin-bottom: 20px;
+.tabs {
+    display: flex;
+    border-bottom: 2px solid var(--border-color);
+    background-color: #111;
+}
+
+.tab-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 10px;
+    padding: 10px 5px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+}
+
+.tab-btn.active {
+    background-color: var(--panel-bg);
+    border-bottom: 2px solid var(--element-color);
+    color: var(--element-color);
+}
+
+.tab-content {
+    display: none;
+    flex-direction: column;
+    padding: 15px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.tab-content.active {
+    display: flex;
+}
+
+/* Scrollbar specific to sidebar contents */
+.tab-content::-webkit-scrollbar {
+    width: 8px;
+}
+.tab-content::-webkit-scrollbar-track {
+    background: var(--panel-bg);
+}
+.tab-content::-webkit-scrollbar-thumb {
+    background-color: var(--element-color);
+    border: 1px solid #000;
+}
+
+/* Quest Styles */
+.quest-card {
+    background-color: #222;
+    border: 2px solid #444;
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 8px;
+}
+.quest-card h4 {
+    color: #ffd700;
+    margin-bottom: 5px;
+    font-size: 10px;
+}
+.quest-card p {
+    color: #aaa;
+    margin-bottom: 5px;
+    line-height: 1.3;
+}
+.quest-card .progress {
+    width: 100%;
+    height: 6px;
+    background-color: #111;
+    border: 1px solid #555;
+    margin-bottom: 5px;
+}
+.quest-card .progress-fill {
+    height: 100%;
+    background-color: #00fa9a;
+    width: 0%;
+}
+.quest-btn {
+    background-color: #00fa9a;
+    color: #000;
+    border: 2px solid #fff;
+    padding: 5px;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 8px;
+    width: 100%;
+    cursor: pointer;
+}
+.quest-btn:disabled {
+    background-color: #555;
+    color: #888;
+    cursor: not-allowed;
+    border-color: #333;
 }
 
 .upgrade-btn {
@@ -231,7 +357,19 @@ canvas {
     font-family: 'Press Start 2P', cursive;
     font-size: 10px;
     cursor: pointer;
+    width: 100%;
+}
+
+#rebirth-btn:not(:disabled) {
     animation: pulse 2s infinite;
+}
+
+#rebirth-btn:disabled {
+    background-color: #400040;
+    border-color: #555;
+    color: #888;
+    cursor: not-allowed;
+    animation: none;
 }
 
 @keyframes pulse {
@@ -244,7 +382,7 @@ canvas {
     main {
         flex-direction: column;
     }
-    .shop {
+    .sidebar {
         width: 100%;
         flex: 1;
     }

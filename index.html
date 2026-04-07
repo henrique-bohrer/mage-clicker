@@ -26,11 +26,26 @@
         <div id="game-screen" class="screen hidden">
             <header>
                 <div class="stats">
-                    <p>Mana: <span id="mana-display">0</span></p>
-                    <p>Mana/s: <span id="mana-per-sec-display">0</span></p>
-                    <p>Prestige: <span id="prestige-display">1</span>x</p>
+                    <div class="stat-column">
+                        <p>Nv: <span id="level-display">1</span></p>
+                        <p>XP: <span id="xp-display">0</span>/<span id="xp-max-display">100</span></p>
+                    </div>
+                    <div class="stat-column">
+                        <p>Mana: <span id="mana-display">0</span></p>
+                        <p>Mana/s: <span id="mana-per-sec-display">0</span></p>
+                    </div>
+                    <div class="stat-column">
+                        <p>Diamantes: <span id="diamonds-display" style="color: #00ffff;">0</span></p>
+                        <p>Prestige: <span id="prestige-display">1</span>x</p>
+                    </div>
                 </div>
-                <button id="rebirth-btn" class="hidden">Renascer (1e12 Mana)</button>
+                <div class="rebirth-container">
+                    <button id="rebirth-btn" disabled>Renascer</button>
+                    <div class="rebirth-progress-bg">
+                        <div id="rebirth-progress-bar"></div>
+                    </div>
+                    <p id="rebirth-percentage">0%</p>
+                </div>
             </header>
 
             <main>
@@ -38,10 +53,35 @@
                     <canvas id="gameCanvas" width="400" height="400"></canvas>
                 </div>
 
-                <aside class="shop">
-                    <h2>Loja</h2>
-                    <div id="upgrades-container">
-                        <!-- Upgrades vão aqui via JS -->
+                <aside class="sidebar">
+                    <div class="tabs">
+                        <button class="tab-btn active" data-target="loja">Loja</button>
+                        <button class="tab-btn" data-target="quests">Quests</button>
+                        <button class="tab-btn" data-target="caixas">Caixas</button>
+                    </div>
+
+                    <div id="loja-tab" class="tab-content active">
+                        <div id="upgrades-container">
+                            <!-- Upgrades vão aqui via JS -->
+                        </div>
+                    </div>
+
+                    <div id="quests-tab" class="tab-content">
+                        <div id="quests-container">
+                            <!-- Quests via JS -->
+                        </div>
+                    </div>
+
+                    <div id="caixas-tab" class="tab-content">
+                        <div id="caixas-container">
+                            <!-- Lootboxes via JS -->
+                        </div>
+                        <div class="skins-inventory">
+                            <h3>Skins</h3>
+                            <div id="skins-container">
+                                <!-- Inventário de skins -->
+                            </div>
+                        </div>
                     </div>
                 </aside>
             </main>
