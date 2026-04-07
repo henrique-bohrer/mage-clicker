@@ -294,6 +294,9 @@ function iniciarJogo(loaded = false) {
     selectionScreen.classList.add('hidden');
     gameScreen.classList.remove('hidden');
 
+    // Atualizar a variável CSS do scrollbar com a cor do elemento
+    document.documentElement.style.setProperty('--element-color', coresElemento[elementoSelecionado]);
+
     // Animação de fade-in no jogo principal
     gameScreen.style.opacity = '0';
     setTimeout(() => {
@@ -406,8 +409,8 @@ function desenharMago() {
     const W = '#ffffff'; // White/Beard
     const W_D = '#d3d3d3'; // White Dark/Beard shadow
     const B = '#000000'; // Black/Eyes
-    const T = '#8b4513'; // Trunk/Wood staff
-    const T_D = '#5c4033'; // Trunk Dark
+    const T = C; // Staff color matching element color (as requested)
+    const T_D = D; // Staff dark matching element shadow
     const X = null; // Vazio
 
     // Matriz 16x16 que desenha o mago
