@@ -32,11 +32,72 @@ let particulas = [];
 let floatingTexts = [];
 
 const upgrades = [
-    { id: 'varinha', nome: 'Varinha Mágica', desc: 'Aumenta Mana/Clique', custoBase: 10, multiCusto: 1.15, nivel: 0, efeito: () => { manaPorClique += 1; } },
-    { id: 'cristal', nome: 'Cristal de Mana', desc: 'Gera Mana Passiva', custoBase: 50, multiCusto: 1.15, nivel: 0, efeito: () => { manaPassiva += 1; } },
-    { id: 'tomo', nome: 'Tomo Arcano', desc: 'Aumenta muito Mana/Clique', custoBase: 500, multiCusto: 1.2, nivel: 0, efeito: () => { manaPorClique += 10; } },
-    { id: 'familiar', nome: 'Familiar Elemental', desc: 'Gera muita Mana Passiva', custoBase: 1000, multiCusto: 1.2, nivel: 0, efeito: () => { manaPassiva += 15; } },
+    { id: 'varinha', nome: 'Varinha Mágica', desc: 'Aumenta Mana/Clique', custoBase: 15, multiCusto: 1.2, nivel: 0, efeito: () => { manaPorClique += 1; } },
+    { id: 'cristal', nome: 'Cristal de Mana', desc: 'Gera Mana Passiva', custoBase: 100, multiCusto: 1.25, nivel: 0, efeito: () => { manaPassiva += 2; } },
+    { id: 'tomo', nome: 'Tomo Arcano', desc: 'Aumenta Mana/Clique', custoBase: 1000, multiCusto: 1.3, nivel: 0, efeito: () => { manaPorClique += 10; } },
+    { id: 'familiar', nome: 'Familiar Elemental', desc: 'Gera Mana Passiva', custoBase: 5000, multiCusto: 1.35, nivel: 0, efeito: () => { manaPassiva += 50; } },
+    { id: 'cajado', nome: 'Cajado Ancestral', desc: 'Aumenta Mana/Clique', custoBase: 50000, multiCusto: 1.4, nivel: 0, efeito: () => { manaPorClique += 100; } },
+    { id: 'aura', nome: 'Aura Mágica', desc: 'Gera Mana Passiva', custoBase: 250000, multiCusto: 1.45, nivel: 0, efeito: () => { manaPassiva += 500; } },
+    { id: 'dragao', nome: 'Dragão Elemental', desc: 'Gera MUITA Mana Passiva', custoBase: 1e6, multiCusto: 1.5, nivel: 0, efeito: () => { manaPassiva += 5000; } },
+    { id: 'artefato', nome: 'Artefato Divino', desc: 'Poder Imensurável', custoBase: 1e9, multiCusto: 1.6, nivel: 0, efeito: () => { manaPorClique += 10000; manaPassiva += 50000; } }
 ];
+
+// Audio Context Setup
+let audioCtx = null;
+
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+function playSound(type) {
+    if (!audioCtx) return;
+
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+
+    const osc = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    const now = audioCtx.currentTime;
+
+    if (type === 'click') {
+        // High pitched short beep
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+        gainNode.gain.setValueAtTime(0.05, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+    } else if (type === 'upgrade') {
+        // Happy ascending arpeggio
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.setValueAtTime(554.37, now + 0.1); // C#
+        osc.frequency.setValueAtTime(659.25, now + 0.2); // E
+        osc.frequency.setValueAtTime(880, now + 0.3);    // A
+        gainNode.gain.setValueAtTime(0.1, now);
+        gainNode.gain.linearRampToValueAtTime(0, now + 0.4);
+        osc.start(now);
+        osc.stop(now + 0.4);
+    } else if (type === 'rebirth') {
+        // Long majestic swell
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(200, now);
+        osc.frequency.linearRampToValueAtTime(800, now + 1.5);
+        gainNode.gain.setValueAtTime(0, now);
+        gainNode.gain.linearRampToValueAtTime(0.2, now + 0.5);
+        gainNode.gain.linearRampToValueAtTime(0, now + 2);
+        osc.start(now);
+        osc.stop(now + 2);
+    }
+}
 
 // Inicialização
 window.onload = () => {
@@ -55,6 +116,7 @@ function configurarRebirth() {
 
 function renascer() {
     if (mana >= 1e12) {
+        playSound('rebirth');
         multiplicadorPrestige *= 3;
         // Reset progresso
         mana = 0;
@@ -147,6 +209,7 @@ function cliqueNoMago(x, y) {
     const ganho = manaPorClique * multiplicadorPrestige;
     mana += ganho;
 
+    playSound('click');
     animarMagoPulo();
     criarParticulas(15, x, y);
     criarFloatingText(`+${ganho}`, x, y);
@@ -227,6 +290,7 @@ function configurarEventosSelecao() {
 }
 
 function iniciarJogo(loaded = false) {
+    initAudio();
     selectionScreen.classList.add('hidden');
     gameScreen.classList.remove('hidden');
 
@@ -237,9 +301,7 @@ function iniciarJogo(loaded = false) {
         gameScreen.style.opacity = '1';
     }, 50);
 
-    if (!loaded) {
-        renderizarLoja();
-    }
+    renderizarLoja();
 
     lastTime = performance.now();
     requestAnimationFrame(gameLoop);
@@ -375,6 +437,7 @@ function comprarUpgrade(index) {
     const custo = Math.floor(up.custoBase * Math.pow(up.multiCusto, up.nivel));
 
     if (mana >= custo) {
+        playSound('upgrade');
         mana -= custo;
         up.nivel++;
         up.efeito();
