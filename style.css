@@ -114,6 +114,7 @@ main {
     display: flex;
     flex: 1;
     gap: 20px;
+    min-height: 0; /* Permite que o main encolha */
 }
 
 .canvas-container {
@@ -124,6 +125,7 @@ main {
     background-color: #111;
     border: 4px solid var(--border-color);
     position: relative;
+    min-height: 0; /* Permite que o container encolha */
 }
 
 canvas {
@@ -131,6 +133,7 @@ canvas {
     max-width: 100%;
     max-height: 100%;
     cursor: pointer;
+    object-fit: contain;
 }
 
 .shop {
@@ -141,6 +144,7 @@ canvas {
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    min-height: 0; /* Permite scroll no conteúdo */
 }
 
 .shop h2 {
