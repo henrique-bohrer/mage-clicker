@@ -62,12 +62,12 @@ const equipamentosDB = {
 };
 
 const raridades = {
-    'comum': { cor: '#aaaaaa', chance: 60, multi: 1 },
-    'incomum': { cor: '#00ff00', chance: 25, multi: 1.5 },
-    'raro': { cor: '#0088ff', chance: 10, multi: 2.5 },
-    'epico': { cor: '#aa00ff', chance: 4, multi: 5 },
-    'lendario': { cor: '#ffcc00', chance: 0.9, multi: 15 },
-    'mitico': { cor: '#ff0000', chance: 0.1, multi: 50 }
+    'comum': { cor: '#aaaaaa', chance: 75.0, multi: 1 },
+    'incomum': { cor: '#00ff00', chance: 15.0, multi: 2 },
+    'raro': { cor: '#0088ff', chance: 6.5, multi: 5 },
+    'epico': { cor: '#aa00ff', chance: 2.5, multi: 12 },
+    'lendario': { cor: '#ffcc00', chance: 0.8, multi: 30 },
+    'mitico': { cor: '#ff0000', chance: 0.2, multi: 100 }
 };
 
 let inventario = ['chapeu_basico', 'roupa_basica', 'cajado_madeira'];
@@ -329,8 +329,9 @@ function calcularStatsEquipamentos() {
     Object.values(equipamentosEquipados).forEach(eqId => {
         const eq = equipamentosDB[eqId];
         if (eq && eq.stats) {
-            if (eq.stats.click) bonusClick += eq.stats.click;
-            if (eq.stats.passiva) bonusPassiva += eq.stats.passiva;
+            const mult = raridades[eq.raridade] ? raridades[eq.raridade].multi : 1;
+            if (eq.stats.click) bonusClick += (eq.stats.click * mult);
+            if (eq.stats.passiva) bonusPassiva += (eq.stats.passiva * mult);
         }
     });
 
@@ -376,7 +377,10 @@ function atacarMonstro(x, y) {
     let dano = 1;
     Object.values(equipamentosEquipados).forEach(eqId => {
         const eq = equipamentosDB[eqId];
-        if (eq && eq.stats && eq.stats.dano) dano += eq.stats.dano;
+        if (eq && eq.stats && eq.stats.dano) {
+            const mult = raridades[eq.raridade] ? raridades[eq.raridade].multi : 1;
+            dano += (eq.stats.dano * mult);
+        }
     });
 
     dano = Math.floor(dano * multiplicadorPrestige);
@@ -1103,14 +1107,19 @@ function abrirCaixa(index) {
         const rand = Math.random() * 100;
         let raridadeGanha = 'comum';
 
-        // Modificador de sorte baseado na caixa (caixas mais caras têm mais chance)
-        const luckMod = index * 2;
+        // Modificador de sorte baseado na caixa (caixas mais caras aumentam as chances de raridades altas)
+        // Reduzimos o custo da sorte bruta, mas multiplicamos a chance base pelas caixas
+        let chanceM = raridades['mitico'].chance * (1 + index * 0.5);
+        let chanceL = raridades['lendario'].chance * (1 + index * 0.5) + chanceM;
+        let chanceE = raridades['epico'].chance * (1 + index * 0.5) + chanceL;
+        let chanceR = raridades['raro'].chance * (1 + index * 0.5) + chanceE;
+        let chanceI = raridades['incomum'].chance * (1 + index * 0.5) + chanceR;
 
-        if (rand < raridades['mitico'].chance + luckMod) raridadeGanha = 'mitico';
-        else if (rand < raridades['lendario'].chance + luckMod * 1.5) raridadeGanha = 'lendario';
-        else if (rand < raridades['epico'].chance + luckMod * 2) raridadeGanha = 'epico';
-        else if (rand < raridades['raro'].chance + luckMod * 3) raridadeGanha = 'raro';
-        else if (rand < raridades['incomum'].chance + luckMod * 4) raridadeGanha = 'incomum';
+        if (rand <= chanceM) raridadeGanha = 'mitico';
+        else if (rand <= chanceL) raridadeGanha = 'lendario';
+        else if (rand <= chanceE) raridadeGanha = 'epico';
+        else if (rand <= chanceR) raridadeGanha = 'raro';
+        else if (rand <= chanceI) raridadeGanha = 'incomum';
 
         // Filtrar equipamentos do BD com essa raridade
         const equipsPossiveis = Object.values(equipamentosDB).filter(eq => eq.raridade === raridadeGanha);
@@ -1153,13 +1162,14 @@ function renderizarInventario() {
         card.className = `inv-item rarity-${eq.raridade} ${isEquipped ? 'equipped' : ''}`;
 
         let statsStr = '';
-        if (eq.stats.click) statsStr += `C:${eq.stats.click} `;
-        if (eq.stats.passiva) statsStr += `P:${eq.stats.passiva} `;
-        if (eq.stats.dano) statsStr += `D:${eq.stats.dano} `;
+        const mult = raridades[eq.raridade].multi;
+        if (eq.stats.click) statsStr += `C:${eq.stats.click * mult} `;
+        if (eq.stats.passiva) statsStr += `P:${eq.stats.passiva * mult} `;
+        if (eq.stats.dano) statsStr += `D:${eq.stats.dano * mult} `;
 
         card.innerHTML = `
             <div class="item-name" style="color: ${raridades[eq.raridade].cor}">${eq.nome}</div>
-            <div style="font-size: 0.4rem; color: #888;">${statsStr}</div>
+            <div style="font-size: 0.4rem; color: #888;">Multi: ${mult}x<br>${statsStr}</div>
         `;
 
         card.onclick = () => {
