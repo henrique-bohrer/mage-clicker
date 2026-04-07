@@ -255,6 +255,62 @@ canvas {
     border: 1px solid #000;
 }
 
+/* Inventory Grid */
+.inv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.inv-item {
+    background: #2a2a2a;
+    border: 2px solid #555;
+    padding: 5px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.1s;
+    font-size: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 80px;
+}
+
+.inv-item:hover {
+    transform: scale(1.05);
+}
+
+.inv-item .item-name {
+    margin-bottom: 5px;
+}
+
+.inv-item.equipped {
+    box-shadow: 0 0 10px inset rgba(255, 255, 255, 0.2);
+}
+
+/* Rarities */
+.rarity-comum { border-color: #aaaaaa; }
+.rarity-incomum { border-color: #00ff00; }
+.rarity-raro { border-color: #0088ff; }
+.rarity-epico { border-color: #aa00ff; }
+.rarity-lendario { border-color: #ffcc00; }
+.rarity-mitico { border-color: #ff0000; }
+
+/* Adventures */
+.adventure-card {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    padding: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.adventure-card:hover {
+    background: #333;
+    border-color: var(--element-color, #fff);
+}
+
 /* Quest Styles */
 .quest-card {
     background-color: #222;

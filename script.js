@@ -49,22 +49,40 @@ let quests = [
     { id: 'q3', nome: 'Dedo Cansado', desc: 'Dê 500 cliques.', objetivo: 500, tipo: 'clicks', recompensas: { xp: 200, diamantes: 25 }, completada: false }
 ];
 
-// Caixas e Skins
+// Equipamentos e Inventário
+const equipamentosDB = {
+    'chapeu_basico': { id: 'chapeu_basico', nome: 'Chapéu Básico', tipo: 'hat', raridade: 'comum', cor: '#ffffff', stats: { click: 1 } },
+    'chapeu_pontudo': { id: 'chapeu_pontudo', nome: 'Chapéu Pontudo', tipo: 'hat', raridade: 'incomum', cor: '#00ff00', stats: { click: 2, passiva: 1 } },
+    'coroa_rei': { id: 'coroa_rei', nome: 'Coroa do Rei', tipo: 'hat', raridade: 'mitico', cor: '#ff0000', stats: { click: 50, passiva: 50 } },
+    'roupa_basica': { id: 'roupa_basica', nome: 'Roupão Básico', tipo: 'robe', raridade: 'comum', cor: '#ffffff', stats: { passiva: 1 } },
+    'shorts_hipster': { id: 'shorts_hipster', nome: 'Shorts Hipster', tipo: 'robe', raridade: 'raro', cor: '#0088ff', stats: { click: 5, passiva: 2 } },
+    'manto_arcano': { id: 'manto_arcano', nome: 'Manto Arcano', tipo: 'epico', raridade: 'epico', cor: '#aa00ff', stats: { click: 20, passiva: 20 } },
+    'cajado_madeira': { id: 'cajado_madeira', nome: 'Graveto', tipo: 'staff', raridade: 'comum', cor: '#ffffff', stats: { dano: 1 } },
+    'cajado_cristal': { id: 'cajado_cristal', nome: 'Cajado de Cristal', tipo: 'staff', raridade: 'lendario', cor: '#ffcc00', stats: { dano: 15, click: 10 } }
+};
+
+const raridades = {
+    'comum': { cor: '#aaaaaa', chance: 60, multi: 1 },
+    'incomum': { cor: '#00ff00', chance: 25, multi: 1.5 },
+    'raro': { cor: '#0088ff', chance: 10, multi: 2.5 },
+    'epico': { cor: '#aa00ff', chance: 4, multi: 5 },
+    'lendario': { cor: '#ffcc00', chance: 0.9, multi: 15 },
+    'mitico': { cor: '#ff0000', chance: 0.1, multi: 50 }
+};
+
+let inventario = ['chapeu_basico', 'roupa_basica', 'cajado_madeira'];
+let equipamentosEquipados = {
+    hat: 'chapeu_basico',
+    robe: 'roupa_basica',
+    staff: 'cajado_madeira'
+};
+
+// Caixas e Loots
 const caixas = [
     { id: 'c1', nome: 'Caixa de Madeira', custo: 10, cor: '#8b4513' },
     { id: 'c2', nome: 'Caixa de Ferro', custo: 50, cor: '#aaa' },
     { id: 'c3', nome: 'Caixa Mágica', custo: 200, cor: '#dda0dd' }
 ];
-
-const skinsInfo = {
-    'Comum': { chanceBase: 60, cor: '#ffffff', modificador: 1 },
-    'Raro': { chanceBase: 25, cor: '#1e90ff', modificador: 1.5 },
-    'Épico': { chanceBase: 10, cor: '#800080', modificador: 3 },
-    'Mítico': { chanceBase: 5, cor: '#ffd700', modificador: 10 }
-};
-
-let skinsDesbloqueadas = ['Comum'];
-let skinEquipada = 'Comum';
 
 // Partículas
 let particulas = [];
@@ -137,6 +155,22 @@ function playSound(type) {
         osc.stop(now + 2);
     }
 }
+
+// Aventuras
+let modoAventura = false;
+let aventuraAtual = null;
+let monstroAtual = null;
+let xMagoAventura = -100;
+let xMonstro = 300;
+let animacaoMagoAtacando = 0;
+let animacaoMagoMovendo = false;
+let particulasDano = [];
+
+const dungeons = [
+    { id: 'floresta', nome: 'Floresta Sombria', nivelReq: 1, hpMonstro: 50, bg: '#002200', monstros: ['Goblin', 'Slime', 'Lobo'], recompensaMana: 100, recompensaXP: 50 },
+    { id: 'caverna', nome: 'Caverna de Cristal', nivelReq: 3, hpMonstro: 250, bg: '#000033', monstros: ['Golem', 'Morcego', 'Esqueleto'], recompensaMana: 1000, recompensaXP: 200 },
+    { id: 'castelo', nome: 'Castelo Abandonado', nivelReq: 5, hpMonstro: 1500, bg: '#220000', monstros: ['Vampiro', 'Fantasma', 'Gárgula'], recompensaMana: 5000, recompensaXP: 1000, dropCaixa: 'c1' }
+];
 
 // Inicialização
 window.onload = () => {
@@ -216,10 +250,17 @@ function salvarJogo() {
         totalClicks,
         upgrades: upgrades.map(up => up.nivel),
         quests: quests.map(q => ({ completada: q.completada })),
-        skinsDesbloqueadas,
-        skinEquipada
+        inventario,
+        equipamentosEquipados
     };
     localStorage.setItem('magosSave', JSON.stringify(dados));
+}
+
+function hardReset() {
+    if (confirm("Tem certeza que deseja APAGAR TUDO e começar do zero? (Sem nenhum bônus de prestígio)")) {
+        localStorage.removeItem('magosSave');
+        location.reload();
+    }
 }
 
 function carregarJogo() {
@@ -247,8 +288,8 @@ function carregarJogo() {
                     if (quests[index]) quests[index].completada = qData.completada;
                 });
             }
-            if (dados.skinsDesbloqueadas) skinsDesbloqueadas = dados.skinsDesbloqueadas;
-            if (dados.skinEquipada) skinEquipada = dados.skinEquipada;
+            if (dados.inventario) inventario = dados.inventario;
+            if (dados.equipamentosEquipados) equipamentosEquipados = dados.equipamentosEquipados;
 
             if (dados.elementoSelecionado) {
                 elementoSelecionado = dados.elementoSelecionado;
@@ -281,9 +322,26 @@ function configurarCliqueMago() {
     });
 }
 
+function calcularStatsEquipamentos() {
+    let bonusClick = 0;
+    let bonusPassiva = 0;
+
+    Object.values(equipamentosEquipados).forEach(eqId => {
+        const eq = equipamentosDB[eqId];
+        if (eq && eq.stats) {
+            if (eq.stats.click) bonusClick += eq.stats.click;
+            if (eq.stats.passiva) bonusPassiva += eq.stats.passiva;
+        }
+    });
+
+    return { bonusClick, bonusPassiva };
+}
+
 function cliqueNoMago(x, y) {
-    const multSkin = skinsInfo[skinEquipada] ? skinsInfo[skinEquipada].modificador : 1;
-    const ganho = (manaPorClique * multiplicadorPrestige) * multSkin;
+    if (modoAventura && monstroAtual) return;
+
+    const statsEq = calcularStatsEquipamentos();
+    const ganho = (manaPorClique + statsEq.bonusClick) * multiplicadorPrestige;
     mana += ganho;
     totalClicks++;
     ganharXP(1); // Ganha 1 de XP por clique
@@ -294,6 +352,51 @@ function cliqueNoMago(x, y) {
     criarFloatingText(`+${ganho}`, x, y);
 
     atualizarQuests();
+}
+
+// Configurar clique para atacar no modo aventura
+canvas.addEventListener('click', (e) => {
+    if (!modoAventura || !monstroAtual) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    // Hitbox do monstro (área direita do canvas)
+    if (x > canvas.width / 2) {
+        atacarMonstro(x, y);
+    }
+});
+
+function atacarMonstro(x, y) {
+    if (!monstroAtual || animacaoMagoMovendo) return;
+
+    let dano = 1;
+    Object.values(equipamentosEquipados).forEach(eqId => {
+        const eq = equipamentosDB[eqId];
+        if (eq && eq.stats && eq.stats.dano) dano += eq.stats.dano;
+    });
+
+    dano = Math.floor(dano * multiplicadorPrestige);
+
+    monstroAtual.hp -= dano;
+    animacaoMagoAtacando = 10;
+
+    playSound('click');
+
+    particulasDano.push({
+        texto: `-${dano}`,
+        x: xMonstro + Math.random() * 20 - 10,
+        y: canvas.height / 2 - 20,
+        vy: -2,
+        vida: 30
+    });
+
+    if (monstroAtual.hp <= 0) {
+        monstroDerrotado();
+    }
 }
 
 function criarParticulas(qtd, x, y, burst = false) {
@@ -388,7 +491,8 @@ function iniciarJogo(loaded = false) {
     renderizarLoja();
     renderizarQuests();
     renderizarCaixas();
-    renderizarInventarioSkins();
+    renderizarInventario();
+    renderizarAventuras();
 
     lastTime = performance.now();
     requestAnimationFrame(gameLoop);
@@ -405,26 +509,34 @@ function gameLoop(timestamp) {
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    desenharFundo();
-    desenharMago();
+    if (modoAventura) {
+        desenharAventura(deltaTime);
+    } else {
+        desenharFundo();
+        desenharMagoIdle(deltaTime);
+    }
+
     atualizarParticulas();
     atualizarFloatingTexts();
 
-    // Animação do pulso do mago
-    if (pulsoMago > 0) {
-        pulsoMago -= deltaTime * 0.01;
-        if (pulsoMago < 0) pulsoMago = 0;
-    }
-    magoScale = 1 + pulsoMago * 0.2;
-
-    // Passiva (calculada baseada no tempo real para ser independente de FPS)
-    mana += (manaPassiva * multiplicadorPrestige) * (deltaTime / 1000);
+    const statsEq = calcularStatsEquipamentos();
+    mana += ((manaPassiva + statsEq.bonusPassiva) * multiplicadorPrestige) * (deltaTime / 1000);
 
     atualizarUI();
     atualizarLojaUI();
     atualizarQuests();
 
     requestAnimationFrame(gameLoop);
+}
+
+function desenharMagoIdle(deltaTime) {
+    if (pulsoMago > 0) {
+        pulsoMago -= deltaTime * 0.01;
+        if (pulsoMago < 0) pulsoMago = 0;
+    }
+    magoScale = 1 + pulsoMago * 0.2;
+
+    desenharMago(canvas.width / 2, canvas.height / 2);
 }
 
 function desenharFundo() {
@@ -468,12 +580,9 @@ function ajustarCor(corHex, fator) {
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
-function desenharMago() {
-    const centroX = canvas.width / 2;
-    const centroY = canvas.height / 2;
-
+function desenharMago(x, y) {
     ctx.save();
-    ctx.translate(centroX, centroY);
+    ctx.translate(x, y);
 
     // Animação de idle (flutuar)
     const floatY = Math.sin(lastTime * 0.002) * 5;
@@ -490,53 +599,338 @@ function desenharMago() {
     const D = ajustarCor(C, 0.7); // Cor escura do elemento (sombra)
     const L = ajustarCor(C, 1.3); // Cor clara do elemento (brilho)
 
-    // Cor de destaque baseada na Skin Equipada
-    const skinColor = skinsInfo[skinEquipada] ? skinsInfo[skinEquipada].cor : '#ffffff';
-
     const S = '#f4a460'; // Skin/Pele
     const S_D = '#cd853f'; // Skin Dark
     const W = '#ffffff'; // White/Beard
-    const W_D = '#d3d3d3'; // White Dark/Beard shadow
     const B = '#000000'; // Black/Eyes
-    const T = C; // Staff color matching element color (as requested)
-    const T_D = D; // Staff dark matching element shadow
-
-    // Substitui o 'L' (Brilho) pela cor da skin mítica/rara se não for comum, para dar um visual único
-    const H = skinEquipada === 'Comum' ? L : skinColor;
-
     const X = null; // Vazio
 
-    // Matriz 16x16 que desenha o mago
-    const sprite = [
-        [X, X, X, X, X, X, X, C, C, C, X, X, X, X, X, X],
-        [X, X, X, X, X, C, C, C, C, H, C, C, X, X, X, X],
-        [X, X, X, X, C, C, C, C, C, C, H, C, C, X, X, X],
-        [X, X, X, X, C, C, S, S, S, S, S, C, C, C, X, X],
-        [X, H, X, X, C, S, B, S, B, S, W, C, C, X, X, X],
-        [X, H, H, X, C, S, S, S, S, S, W, W, C, C, X, X],
-        [X, T, X, X, X, W, W, W, W, W, W, C, C, X, X, X],
-        [X, T, X, X, X, W, W, W, W, W, C, C, C, X, X, X],
-        [X, S, S, X, C, W, W, W, W, D, C, C, X, X, X, X],
-        [X, T, T, C, C, W, W, W, D, D, C, C, C, X, X, X],
-        [X, T, X, C, C, C, W, W, D, C, C, H, C, X, X, X],
-        [X, T, X, D, C, C, W, C, D, C, C, H, C, X, X, X],
-        [X, T, T, D, D, C, C, C, D, D, C, C, S, S, X, X],
-        [X, T, X, X, C, C, C, C, C, C, D, X, X, X, X, X],
-        [T, T, X, X, X, C, C, C, C, C, D, X, X, X, X, X],
-        [T, X, X, X, X, C, C, C, C, C, D, X, X, X, X, X]
+    // Colors derived from equipments
+    const hatEq = equipamentosDB[equipamentosEquipados.hat];
+    const robeEq = equipamentosDB[equipamentosEquipados.robe];
+    const staffEq = equipamentosDB[equipamentosEquipados.staff];
+
+    const HC = hatEq ? hatEq.cor : C; // Hat color
+    const RC = robeEq ? robeEq.cor : C; // Robe color
+    const SC = staffEq ? staffEq.cor : C; // Staff color
+
+    const HC_D = ajustarCor(HC, 0.7);
+    const RC_D = ajustarCor(RC, 0.7);
+    const SC_D = ajustarCor(SC, 0.7);
+
+    // Layer 1: Body / Head (Base)
+    const bodySprite = [
+        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, X, X, X, X, S, S, S, S, S, X, X, X, X, X],
+        [X, X, X, X, X, S, B, S, B, S, W, X, X, X, X, X],
+        [X, X, X, X, X, S, S, S, S, S, W, W, X, X, X, X],
+        [X, X, X, X, X, W, W, W, W, W, W, X, X, X, X, X],
+        [X, X, X, X, X, W, W, W, W, W, X, X, X, X, X, X],
+        [X, S, S, X, X, W, W, W, W, X, X, X, X, X, X, X],
+        [X, X, X, X, X, W, W, W, X, X, X, X, X, X, X, X],
+        [X, X, X, X, X, X, W, W, X, X, X, X, X, X, X, X],
+        [X, X, X, X, X, X, W, X, X, X, X, X, X, X, X, X],
+        [X, X, X, X, X, X, X, X, X, X, X, X, S, S, X, X],
+        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]
     ];
 
-    for (let y = 0; y < 16; y++) {
-        for (let x = 0; x < 16; x++) {
-            const cor = sprite[y][x];
-            if (cor !== null) {
-                ctx.fillStyle = cor;
-                ctx.fillRect(offsetX + x * ps, offsetY + y * ps, ps, ps);
+    // Layer 2: Robe
+    let robeSprite = [];
+    if (equipamentosEquipados.robe === 'shorts_hipster') {
+        robeSprite = [
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, RC, RC, X, X, X, X, X, RC, RC, X, X, X],
+            [X, X, X, X, RC, X, X, X, X, X, X, X, RC, X, X, X],
+            [X, X, X, X, RC, X, X, X, X, X, X, X, RC, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, RC, RC, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, RC, RC, RC, X, X, X],
+            [X, X, X, X, RC, X, X, X, X, RC_D, RC, RC, X, X, X, X],
+            [X, X, X, RC, RC, X, X, X, RC_D, RC_D, RC, RC, RC, X, X, X],
+            [X, X, X, RC, RC, RC, X, X, RC_D, RC, RC, X, RC, X, X, X],
+            [X, X, X, RC_D, RC, RC, X, RC, RC_D, RC, RC, X, RC, X, X, X],
+            [X, X, X, RC_D, RC_D, RC, RC, RC, RC_D, RC_D, RC, RC, X, X, X, X],
+            [X, X, X, X, RC, RC, RC, RC, RC, RC, RC_D, X, X, X, X, X],
+            [X, X, X, X, X, S, S, X, X, S, S, X, X, X, X, X],
+            [X, X, X, X, X, S, S, X, X, S, S, X, X, X, X, X]
+        ];
+    } else {
+        // Default Robe
+        robeSprite = [
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, RC, RC, X, X, X, X, X, RC, RC, X, X, X],
+            [X, X, X, X, RC, X, X, X, X, X, X, X, RC, X, X, X],
+            [X, X, X, X, RC, X, X, X, X, X, X, X, RC, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, RC, RC, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, RC, RC, RC, X, X, X],
+            [X, X, X, X, RC, X, X, X, X, RC_D, RC, RC, X, X, X, X],
+            [X, X, X, RC, RC, X, X, X, RC_D, RC_D, RC, RC, RC, X, X, X],
+            [X, X, X, RC, RC, RC, X, X, RC_D, RC, RC, X, RC, X, X, X],
+            [X, X, X, RC_D, RC, RC, X, RC, RC_D, RC, RC, X, RC, X, X, X],
+            [X, X, X, RC_D, RC_D, RC, RC, RC, RC_D, RC_D, RC, RC, X, X, X, X],
+            [X, X, X, X, RC, RC, RC, RC, RC, RC, RC_D, X, X, X, X, X],
+            [X, X, X, X, X, RC, RC, RC, RC, RC, RC_D, X, X, X, X, X],
+            [X, X, X, X, X, RC, RC, RC, RC, RC, RC_D, X, X, X, X, X]
+        ];
+    }
+
+    // Layer 3: Hat
+    let hatSprite = [];
+    if (equipamentosEquipados.hat === 'coroa_rei') {
+        hatSprite = [
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, HC, X, HC, X, HC, X, X, X, X, X],
+            [X, X, X, X, X, X, HC, HC, HC, HC, HC, X, X, X, X, X],
+            [X, X, X, X, X, HC, HC, HC, HC, HC, HC, HC, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]
+        ];
+    } else {
+        // Default Hat
+        hatSprite = [
+            [X, X, X, X, X, X, X, HC, HC, HC, X, X, X, X, X, X],
+            [X, X, X, X, X, HC, HC, HC, HC, HC, HC, HC, X, X, X, X],
+            [X, X, X, X, HC, HC, HC, HC, HC, HC, HC, HC, HC, X, X, X],
+            [X, X, X, X, HC, HC, X, X, X, X, X, HC, HC, HC, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]
+        ];
+    }
+
+    // Layer 4: Staff
+    const staffSprite = [
+        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, SC_D, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, SC_D, SC_D, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, SC, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, SC, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [SC, SC, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [SC, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]
+    ];
+
+    // Draw all layers
+    const drawSprite = (spriteLayer) => {
+        for (let y = 0; y < 16; y++) {
+            for (let x = 0; x < 16; x++) {
+                const cor = spriteLayer[y][x];
+                if (cor !== null) {
+                    ctx.fillStyle = cor;
+                    ctx.fillRect(offsetX + x * ps, offsetY + y * ps, ps, ps);
+                }
             }
+        }
+    };
+
+    drawSprite(bodySprite);
+    drawSprite(robeSprite);
+    drawSprite(hatSprite);
+    drawSprite(staffSprite);
+
+    ctx.restore();
+}
+
+// === Sistema de Aventuras ===
+
+function renderizarAventuras() {
+    const container = document.getElementById('aventuras-container');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    dungeons.forEach(d => {
+        const div = document.createElement('div');
+        div.className = 'adventure-card';
+        div.style.borderColor = d.nivelReq <= level ? '#555' : '#ff0000';
+
+        div.innerHTML = `
+            <h4 style="color: #ffd700;">${d.nome} (Nv ${d.nivelReq}+)</h4>
+            <p style="color: #aaa; font-size: 0.6rem; margin-top: 5px;">Recompensas: ${d.recompensaMana} Mana, ${d.recompensaXP} XP</p>
+        `;
+
+        if (level >= d.nivelReq) {
+            div.onclick = () => entrarAventura(d.id);
+        } else {
+            div.style.opacity = '0.5';
+            div.style.cursor = 'not-allowed';
+            div.innerHTML += `<p style="color: red; font-size: 0.6rem; margin-top: 5px;">Nível insuficiente.</p>`;
+        }
+
+        container.appendChild(div);
+    });
+}
+
+function entrarAventura(id) {
+    aventuraAtual = dungeons.find(d => d.id === id);
+    modoAventura = true;
+    xMagoAventura = 100;
+    gerarMonstro();
+
+    const container = document.getElementById('aventuras-container');
+    const btnLeave = document.getElementById('btn-leave-adventure');
+    if (container) container.style.display = 'none';
+    if (btnLeave) {
+        btnLeave.classList.remove('hidden');
+        btnLeave.style.display = 'block';
+    }
+
+    playSound('rebirth'); // Tocar som épico ao entrar na dungeon
+}
+
+function sairAventura() {
+    modoAventura = false;
+    aventuraAtual = null;
+    monstroAtual = null;
+
+    const container = document.getElementById('aventuras-container');
+    const btnLeave = document.getElementById('btn-leave-adventure');
+    if (container) container.style.display = 'block';
+    if (btnLeave) {
+        btnLeave.classList.add('hidden');
+        btnLeave.style.display = 'none';
+    }
+}
+
+function gerarMonstro() {
+    if (!aventuraAtual) return;
+
+    animacaoMagoMovendo = false;
+    monstroAtual = {
+        nome: aventuraAtual.monstros[Math.floor(Math.random() * aventuraAtual.monstros.length)],
+        hpMax: aventuraAtual.hpMonstro,
+        hp: aventuraAtual.hpMonstro,
+        cor: `hsl(${Math.random() * 360}, 70%, 50%)` // Cor aleatória pro monstro
+    };
+    xMonstro = canvas.width - 100;
+}
+
+function monstroDerrotado() {
+    // Recompensas
+    mana += aventuraAtual.recompensaMana * multiplicadorPrestige;
+    ganharXP(aventuraAtual.recompensaXP);
+
+    if (aventuraAtual.dropCaixa && Math.random() < 0.2) { // 20% de chance de dropar caixa
+        const caixaIdx = caixas.findIndex(c => c.id === aventuraAtual.dropCaixa);
+        if (caixaIdx >= 0) {
+            abrirCaixa(caixaIdx); // Simula abrir a caixa grátis
         }
     }
 
-    ctx.restore();
+    playSound('upgrade');
+    criarFloatingText(`Vitória!`, canvas.width/2, canvas.height/2 - 50);
+
+    // Iniciar animação do mago andando para a direita (próxima sala)
+    monstroAtual = null;
+    animacaoMagoMovendo = true;
+}
+
+function desenharAventura(deltaTime) {
+    if (!aventuraAtual) return;
+
+    // Fundo da dungeon
+    ctx.fillStyle = aventuraAtual.bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Chao simples
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0, canvas.height / 2 + 50, canvas.width, canvas.height / 2);
+
+    // Lógica do Mago
+    if (animacaoMagoMovendo) {
+        xMagoAventura += deltaTime * 0.2; // Move pra direita
+        magoScale = 1;
+        if (xMagoAventura > canvas.width + 50) {
+            // Saiu da tela, reseta e gera outro
+            xMagoAventura = -50;
+            gerarMonstro();
+        }
+    } else {
+        // Mago posicionado pra batalha
+        xMagoAventura += (100 - xMagoAventura) * 0.1; // Smooth damp para a pos 100
+
+        // Atacando animação
+        if (animacaoMagoAtacando > 0) {
+            xMagoAventura += 10; // Avança
+            animacaoMagoAtacando--;
+        }
+    }
+
+    desenharMago(xMagoAventura, canvas.height / 2);
+
+    // Desenhar monstro
+    if (monstroAtual) {
+        // Forma simples do monstro (um quadrado/blob)
+        ctx.fillStyle = monstroAtual.cor;
+        const sSize = 40 + Math.sin(lastTime * 0.005) * 5; // respira
+        ctx.fillRect(xMonstro - sSize/2, canvas.height / 2 - sSize/2 + 20, sSize, sSize);
+
+        // Olhos
+        ctx.fillStyle = '#000';
+        ctx.fillRect(xMonstro - 10, canvas.height / 2 + 10, 5, 5);
+        ctx.fillRect(xMonstro + 5, canvas.height / 2 + 10, 5, 5);
+
+        // HP Bar
+        const barW = 60;
+        const barH = 8;
+        const hpPct = Math.max(0, monstroAtual.hp / monstroAtual.hpMax);
+        ctx.fillStyle = '#555';
+        ctx.fillRect(xMonstro - barW/2, canvas.height / 2 - 40, barW, barH);
+        ctx.fillStyle = '#f00';
+        ctx.fillRect(xMonstro - barW/2, canvas.height / 2 - 40, barW * hpPct, barH);
+
+        ctx.font = '10px "Press Start 2P"';
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.fillText(monstroAtual.nome, xMonstro, canvas.height / 2 - 50);
+    }
+
+    // Partículas de dano
+    particulasDano = particulasDano.filter(p => {
+        p.y += p.vy;
+        p.vida--;
+        ctx.font = '16px "Press Start 2P"';
+        ctx.fillStyle = '#f00';
+        ctx.textAlign = 'center';
+        ctx.globalAlpha = Math.max(0, p.vida / 30);
+        ctx.fillText(p.texto, p.x, p.y);
+        ctx.globalAlpha = 1;
+        return p.vida > 0;
+    });
 }
 
 function animarMagoPulo() {
@@ -691,75 +1085,108 @@ function abrirCaixa(index) {
         diamantes -= caixa.custo;
         playSound('rebirth'); // Som de caixa abrindo
 
-        // Sorteio
+        // Sorteio de Raridade
         const rand = Math.random() * 100;
-        let skinGanha = 'Comum';
+        let raridadeGanha = 'comum';
 
         // Modificador de sorte baseado na caixa (caixas mais caras têm mais chance)
-        const luckMod = index * 10;
+        const luckMod = index * 2;
 
-        if (rand < skinsInfo['Mítico'].chanceBase + luckMod) {
-            skinGanha = 'Mítico';
-        } else if (rand < skinsInfo['Épico'].chanceBase + luckMod * 2) {
-            skinGanha = 'Épico';
-        } else if (rand < skinsInfo['Raro'].chanceBase + luckMod * 3) {
-            skinGanha = 'Raro';
+        if (rand < raridades['mitico'].chance + luckMod) raridadeGanha = 'mitico';
+        else if (rand < raridades['lendario'].chance + luckMod * 1.5) raridadeGanha = 'lendario';
+        else if (rand < raridades['epico'].chance + luckMod * 2) raridadeGanha = 'epico';
+        else if (rand < raridades['raro'].chance + luckMod * 3) raridadeGanha = 'raro';
+        else if (rand < raridades['incomum'].chance + luckMod * 4) raridadeGanha = 'incomum';
+
+        // Filtrar equipamentos do BD com essa raridade
+        const equipsPossiveis = Object.values(equipamentosDB).filter(eq => eq.raridade === raridadeGanha);
+        if (equipsPossiveis.length === 0) {
+            // Fallback se não houver da raridade
+            raridadeGanha = 'comum';
         }
+
+        const equipsFinais = Object.values(equipamentosDB).filter(eq => eq.raridade === raridadeGanha);
+        const eqGanho = equipsFinais[Math.floor(Math.random() * equipsFinais.length)];
 
         // Efeito visual
         criarParticulas(50, canvas.width/2, canvas.height/2, true);
 
-        if (!skinsDesbloqueadas.includes(skinGanha)) {
-            skinsDesbloqueadas.push(skinGanha);
-        }
-
-        // Equipar automaticamente se for melhor
-        if (skinsInfo[skinGanha].modificador > skinsInfo[skinEquipada].modificador) {
-            skinEquipada = skinGanha;
-        }
+        inventario.push(eqGanho.id);
 
         atualizarUI();
-        renderizarInventarioSkins();
-        alert(`Você abriu a ${caixa.nome} e ganhou a skin: ${skinGanha}!`);
+        renderizarInventario();
+        alert(`Você abriu a ${caixa.nome} e ganhou: ${eqGanho.nome} (${raridadeGanha})!`);
     } else {
         alert('Diamantes insuficientes!');
     }
 }
 
-function renderizarInventarioSkins() {
-    skinsContainer.innerHTML = '';
+function renderizarInventario() {
+    const equipadosContainer = document.getElementById('equipados-container');
+    const mochilaContainer = document.getElementById('mochila-container');
+    const filterSelect = document.getElementById('inv-filter');
 
-    // Ordenar pelo modificador
-    const sortedSkins = Object.keys(skinsInfo).sort((a, b) => skinsInfo[b].modificador - skinsInfo[a].modificador);
+    if (!equipadosContainer || !mochilaContainer) return;
 
-    sortedSkins.forEach(skin => {
-        const unlocked = skinsDesbloqueadas.includes(skin);
-        const equipped = skin === skinEquipada;
-        const info = skinsInfo[skin];
+    equipadosContainer.innerHTML = '';
+    mochilaContainer.innerHTML = '';
+
+    const criarCardItem = (eqId, isEquipped) => {
+        const eq = equipamentosDB[eqId];
+        if (!eq) return null;
 
         const card = document.createElement('div');
-        card.className = 'quest-card';
-        card.style.borderColor = unlocked ? info.cor : '#333';
-        card.style.opacity = unlocked ? '1' : '0.5';
-        card.style.marginTop = '10px';
+        card.className = `inv-item rarity-${eq.raridade} ${isEquipped ? 'equipped' : ''}`;
+
+        let statsStr = '';
+        if (eq.stats.click) statsStr += `C:${eq.stats.click} `;
+        if (eq.stats.passiva) statsStr += `P:${eq.stats.passiva} `;
+        if (eq.stats.dano) statsStr += `D:${eq.stats.dano} `;
 
         card.innerHTML = `
-            <h4 style="color: ${info.cor}">${skin}</h4>
-            <p>Bônus de Mana: ${info.modificador}x</p>
-            ${unlocked ? `<button class="quest-btn" style="background-color: ${equipped ? '#555' : info.cor}; color: #000; border-color: #fff;" ${equipped ? 'disabled' : ''}>
-                ${equipped ? 'Equipada' : 'Equipar'}
-            </button>` : '<p style="color: red;">Bloqueado</p>'}
+            <div class="item-name" style="color: ${raridades[eq.raridade].cor}">${eq.nome}</div>
+            <div style="font-size: 0.4rem; color: #888;">${statsStr}</div>
         `;
 
-        if (unlocked && !equipped) {
-            card.querySelector('button').onclick = () => {
-                skinEquipada = skin;
-                playSound('click');
-                renderizarInventarioSkins();
-            };
-        }
+        card.onclick = () => {
+            if (isEquipped) {
+                // Desequipar
+                delete equipamentosEquipados[eq.tipo];
+            } else {
+                // Equipar
+                equipamentosEquipados[eq.tipo] = eq.id;
+            }
+            playSound('click');
+            renderizarInventario();
+            atualizarUI();
+        };
 
-        skinsContainer.appendChild(card);
+        return card;
+    };
+
+    // Renderizar Equipados
+    Object.values(equipamentosEquipados).forEach(eqId => {
+        if (eqId) {
+            const card = criarCardItem(eqId, true);
+            if (card) equipadosContainer.appendChild(card);
+        }
+    });
+
+    // Renderizar Mochila
+    let itemsMochila = inventario.filter(id => !Object.values(equipamentosEquipados).includes(id));
+
+    // Ordenação
+    if (filterSelect && filterSelect.value === 'alpha') {
+        itemsMochila.sort((a, b) => equipamentosDB[a].nome.localeCompare(equipamentosDB[b].nome));
+    } else {
+        // Por Raridade
+        const raridadeRank = { 'mitico': 6, 'lendario': 5, 'epico': 4, 'raro': 3, 'incomum': 2, 'comum': 1 };
+        itemsMochila.sort((a, b) => raridadeRank[equipamentosDB[b].raridade] - raridadeRank[equipamentosDB[a].raridade]);
+    }
+
+    itemsMochila.forEach(eqId => {
+        const card = criarCardItem(eqId, false);
+        if (card) mochilaContainer.appendChild(card);
     });
 }
 
@@ -783,8 +1210,10 @@ function atualizarUI() {
         return num.toExponential(2);
     };
 
+    const statsEq = calcularStatsEquipamentos();
+
     manaDisplay.textContent = formatNumber(mana);
-    manaPerSecDisplay.textContent = formatNumber(manaPassiva * multiplicadorPrestige);
+    manaPerSecDisplay.textContent = formatNumber((manaPassiva + statsEq.bonusPassiva) * multiplicadorPrestige);
     prestigeDisplay.textContent = multiplicadorPrestige;
 
     levelDisplay.textContent = level;
