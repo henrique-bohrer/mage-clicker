@@ -614,13 +614,19 @@ function desenharMago(x, y) {
     const robeEq = equipamentosDB[equipamentosEquipados.robe];
     const staffEq = equipamentosDB[equipamentosEquipados.staff];
 
-    const HC = hatEq ? hatEq.cor : C; // Hat color
-    const RC = robeEq ? robeEq.cor : C; // Robe color
-    const SC = staffEq ? staffEq.cor : C; // Staff color
+    // Primary color should always be the element color
+    const HC = C; // Hat color
+    const RC = C; // Robe color
+    const SC = C; // Staff color
 
-    const HC_D = ajustarCor(HC, 0.7);
-    const RC_D = ajustarCor(RC, 0.7);
-    const SC_D = ajustarCor(SC, 0.7);
+    const HC_D = D;
+    const RC_D = D;
+    const SC_D = D;
+
+    // Highlight colors come from the equipment's rarity/definition
+    const HH = hatEq ? raridades[hatEq.raridade].cor : L;
+    const RH = robeEq ? raridades[robeEq.raridade].cor : L;
+    const SH = staffEq ? raridades[staffEq.raridade].cor : L;
 
     // Layer 1: Body / Head (Base)
     const bodySprite = [
@@ -655,7 +661,7 @@ function desenharMago(x, y) {
             [X, X, X, X, X, X, X, X, X, X, X, RC, RC, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, RC, RC, RC, X, X, X],
             [X, X, X, X, RC, X, X, X, X, RC_D, RC, RC, X, X, X, X],
-            [X, X, X, RC, RC, X, X, X, RC_D, RC_D, RC, RC, RC, X, X, X],
+            [X, X, X, RC, RC, X, X, X, RH, RH, RH, RH, RH, X, X, X], // Highlight Belt
             [X, X, X, RC, RC, RC, X, X, RC_D, RC, RC, X, RC, X, X, X],
             [X, X, X, RC_D, RC, RC, X, RC, RC_D, RC, RC, X, RC, X, X, X],
             [X, X, X, RC_D, RC_D, RC, RC, RC, RC_D, RC_D, RC, RC, X, X, X, X],
@@ -675,7 +681,7 @@ function desenharMago(x, y) {
             [X, X, X, X, X, X, X, X, X, X, X, RC, RC, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, RC, RC, RC, X, X, X],
             [X, X, X, X, RC, X, X, X, X, RC_D, RC, RC, X, X, X, X],
-            [X, X, X, RC, RC, X, X, X, RC_D, RC_D, RC, RC, RC, X, X, X],
+            [X, X, X, RC, RC, X, X, X, RH, RH, RH, RH, RH, X, X, X], // Highlight Belt
             [X, X, X, RC, RC, RC, X, X, RC_D, RC, RC, X, RC, X, X, X],
             [X, X, X, RC_D, RC, RC, X, RC, RC_D, RC, RC, X, RC, X, X, X],
             [X, X, X, RC_D, RC_D, RC, RC, RC, RC_D, RC_D, RC, RC, X, X, X, X],
@@ -690,7 +696,7 @@ function desenharMago(x, y) {
     if (equipamentosEquipados.hat === 'coroa_rei') {
         hatSprite = [
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, HC, X, HC, X, HC, X, X, X, X, X],
+            [X, X, X, X, X, X, HH, X, HH, X, HH, X, X, X, X, X], // Highlighted Crown Tips
             [X, X, X, X, X, X, HC, HC, HC, HC, HC, X, X, X, X, X],
             [X, X, X, X, X, HC, HC, HC, HC, HC, HC, HC, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
@@ -710,8 +716,8 @@ function desenharMago(x, y) {
         // Default Hat
         hatSprite = [
             [X, X, X, X, X, X, X, HC, HC, HC, X, X, X, X, X, X],
-            [X, X, X, X, X, HC, HC, HC, HC, HC, HC, HC, X, X, X, X],
-            [X, X, X, X, HC, HC, HC, HC, HC, HC, HC, HC, HC, X, X, X],
+            [X, X, X, X, X, HC, HC, HC, HC, HH, HC, HC, X, X, X, X], // Highlight Trim
+            [X, X, X, X, HC, HC, HC, HC, HC, HC, HH, HC, HC, X, X, X], // Highlight Trim
             [X, X, X, X, HC, HC, X, X, X, X, X, HC, HC, HC, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
@@ -733,9 +739,9 @@ function desenharMago(x, y) {
         [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
         [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
         [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, SC_D, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, SC_D, SC_D, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, X, X, X, SH, X, X, X, X, X, X, X, X, X, X], // Highlight Gem
+        [X, SC_D, X, X, SH, SH, X, X, X, X, X, X, X, X, X, X], // Highlight Gem
+        [X, SC_D, SC_D, X, X, SH, X, X, X, X, X, X, X, X, X, X], // Highlight Gem
         [X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
         [X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
         [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
