@@ -747,21 +747,31 @@ function desenharMago(x, y) {
     const RH = robeEq ? raridades[robeEq.raridade].cor : L;
     const SH = staffEq ? raridades[staffEq.raridade].cor : L;
 
-    // Layer 1: Body / Head (Base)
+    // A base marrom que o usuário quer para a roupa e chapéu básicos:
+    const BR = '#8b4513'; // Brown (Marrom)
+    const BR_D = '#5c2e0b'; // Brown Dark
+
+    // As cores do chapéu e da roupa dependem se há um item equipado diferente ou não.
+    // O chapéu e a roupa básicos agora forçam ser marrom.
+    let HC_Final = (equipamentosEquipados.hat === 'chapeu_basico') ? BR : HC;
+    let RC_Final = (equipamentosEquipados.robe === 'roupa_basica') ? BR : RC;
+    let RC_Dark_Final = (equipamentosEquipados.robe === 'roupa_basica') ? BR_D : RC_D;
+
+    // Layer 1: Body / Head (Base, Face & Beard)
     const bodySprite = [
         [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
         [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, X, S, S, S, S, S, X, X, X, X, X],
+        [X, X, X, X, X, S, S, S, S, S, X, X, X, X, X, X],
         [X, X, X, X, X, S, B, S, B, S, W, X, X, X, X, X],
         [X, X, X, X, X, S, S, S, S, S, W, W, X, X, X, X],
-        [X, X, X, X, X, W, W, W, W, W, W, X, X, X, X, X],
-        [X, X, X, X, X, W, W, W, W, W, X, X, X, X, X, X],
-        [X, S, S, X, X, W, W, W, W, X, X, X, X, X, X, X],
-        [X, X, X, X, X, W, W, W, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, X, W, W, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, X, W, X, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, X, X, X, X, X, X, X, S, S, X, X],
+        [X, X, X, X, X, W, W, W, W, W, W, W, X, X, X, X],
+        [X, X, X, X, X, W, W, W, W, W, W, W, X, X, X, X],
+        [X, S, X, X, X, W, W, W, W, W, W, X, X, X, X, X],
+        [X, X, X, X, X, X, W, W, W, W, X, X, X, X, X, X],
+        [X, X, X, X, X, X, X, X, X, X, X, X, X, S, S, X],
+        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
         [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
         [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
         [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]
@@ -774,22 +784,22 @@ function desenharMago(x, y) {
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, RC, RC, X, X, X, X, X, RC, RC, X, X, X],
-            [X, X, X, X, RC, X, X, X, X, X, X, X, RC, X, X, X],
-            [X, X, X, X, RC, X, X, X, X, X, X, X, RC, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, RC, RC, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, RC, RC, RC, X, X, X],
-            [X, X, X, X, RC, X, X, X, X, RC_D, RC, RC, X, X, X, X],
-            [X, X, X, RC, RC, X, X, X, RH, RH, RH, RH, RH, X, X, X], // Highlight Belt
-            [X, X, X, RC, RC, RC, X, X, RC_D, RC, RC, X, RC, X, X, X],
-            [X, X, X, RC_D, RC, RC, X, RC, RC_D, RC, RC, X, RC, X, X, X],
-            [X, X, X, RC_D, RC_D, RC, RC, RC, RC_D, RC_D, RC, RC, X, X, X, X],
-            [X, X, X, X, RC, RC, RC, RC, RC, RC, RC_D, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, RC_Final, X, X, X, X, X, X, X, X, RC_Final, RC_Final, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, RC_Final, X, X, X],
+            [X, X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X, X],
+            [X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X],
+            [X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X],
+            [X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X, X],
+            [X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X, X],
             [X, X, X, X, X, S, S, X, X, S, S, X, X, X, X, X],
             [X, X, X, X, X, S, S, X, X, S, S, X, X, X, X, X]
         ];
     } else {
-        // Default Robe
+        // Default Robe (following the new image layout)
         robeSprite = [
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
@@ -798,15 +808,15 @@ function desenharMago(x, y) {
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, RC, X, X, X, X, X, RC, RC, X, X, X, X],
-            [X, X, X, RC, RC, X, X, X, X, X, RC, RC, X, X, X, X],
-            [X, X, X, X, X, X, RH, RH, RH, RH, RH, X, X, X, X, X], // Highlight Belt
-            [X, X, X, X, X, RC, RC, RC, RC, RC, RC, RC, X, X, X, X],
-            [X, X, X, X, RC, RC, RC, RC, RC, RC, RC, RC, X, X, X, X],
-            [X, X, X, X, RC, RC, RC, RC, RC, RC, RC, RC, X, X, X, X],
-            [X, X, X, X, X, RC, RC, RC, RC, RC, RC, X, X, X, X, X],
-            [X, X, X, X, X, RC, RC, RC, RC, RC, RC, X, X, X, X, X]
+            [X, X, RC_Final, RC_Final, X, X, X, X, X, X, X, RC_Final, RC_Final, X, X, X],
+            [X, X, RC_Final, RC_Final, X, X, X, X, X, X, X, RC_Final, RC_Final, X, X, X],
+            [X, X, X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X, X],
+            [X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X],
+            [X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X],
+            [X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X],
+            [X, X, X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X, X],
+            [X, X, X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X, X],
+            [X, X, X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X, X]
         ];
     }
 
@@ -815,9 +825,9 @@ function desenharMago(x, y) {
     if (equipamentosEquipados.hat === 'coroa_rei') {
         hatSprite = [
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, HH, X, HH, X, HH, X, X, X, X, X], // Highlighted Crown Tips
-            [X, X, X, X, X, X, HC, HC, HC, HC, HC, X, X, X, X, X],
-            [X, X, X, X, X, HC, HC, HC, HC, HC, HC, HC, X, X, X, X],
+            [X, X, X, X, X, X, HH, X, HH, X, HH, X, X, X, X, X],
+            [X, X, X, X, X, X, HC_Final, HC_Final, HC_Final, HC_Final, HC_Final, X, X, X, X, X],
+            [X, X, X, X, X, HC_Final, HC_Final, HC_Final, HC_Final, HC_Final, HC_Final, HC_Final, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
@@ -832,12 +842,12 @@ function desenharMago(x, y) {
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]
         ];
     } else {
-        // Default Hat
+        // Default Hat (following the new image layout)
         hatSprite = [
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, HC, HC, HC, X, X, X, X, X, X, X, X],
-            [X, X, X, X, HC, HC, HC, HC, HC, X, X, X, X, X, X, X],
-            [X, X, X, X, HC, X, X, X, X, X, HC, X, X, X, X, X],
+            [X, X, X, X, X, HC_Final, HC_Final, HC_Final, HC_Final, X, X, X, X, X, X, X],
+            [X, X, X, X, HC_Final, HC_Final, HC_Final, HC_Final, HC_Final, X, X, X, X, X, X, X],
+            [X, X, X, HC_Final, B, HC_Final, HC_Final, HC_Final, HC_Final, HC_Final, X, X, X, X, X, X],
+            [X, X, X, HC_Final, X, X, X, X, X, X, X, X, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
@@ -853,11 +863,11 @@ function desenharMago(x, y) {
         ];
     }
 
-    // Layer 4: Staff
+    // Layer 4: Staff (sticking down on the left side)
     const staffSprite = [
         [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
         [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
         [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
         [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
