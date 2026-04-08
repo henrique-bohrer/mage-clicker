@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { background-color: #111; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+  canvas { background-color: #0a0a0a; border: 1px solid #333; }
+</style>
+</head>
+<body>
+<canvas id="gameCanvas" width="400" height="400"></canvas>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const C = '#1e90ff';
+const L = '#aaaaaa'; // highlight (comum)
+const S = '#f4a460';
+const W = '#ffffff';
+const B = '#000000';
+const X = null;
+
+const RC = C, HC = C, SC = C, RH = L, HH = L, SH = L, RC_D = C, HC_D = C, SC_D = C;
+
+const bodySprite = [
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, S, S, S, S, S, X, X, X, X, X],
+    [X, X, X, X, X, S, B, S, B, S, W, X, X, X, X, X],
+    [X, X, X, X, X, S, S, S, S, S, W, W, X, X, X, X],
+    [X, X, X, X, X, W, W, W, W, W, W, X, X, X, X, X],
+    [X, X, X, X, X, W, W, W, W, W, X, X, X, X, X, X],
+    [X, S, S, X, X, W, W, W, W, X, X, X, X, X, X, X],
+    [X, X, X, X, X, W, W, W, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, W, W, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, W, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, S, S, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]
+];
+
+const robeSprite = [
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, RC, X, X, X, X, X, RC, RC, X, X, X, X], // shoulders
+    [X, X, X, RC, RC, X, X, X, X, X, RC, RC, X, X, X, X],
+    [X, X, X, X, X, X, RH, RH, RH, RH, RH, X, X, X, X, X], // belt
+    [X, X, X, X, X, RC, RC, RC, RC, RC, RC, RC, X, X, X, X],
+    [X, X, X, X, RC, RC, RC, RC, RC, RC, RC, RC, X, X, X, X],
+    [X, X, X, X, RC, RC, RC, RC, RC, RC, RC, RC, X, X, X, X],
+    [X, X, X, X, X, RC, RC, RC, RC, RC, RC, X, X, X, X, X],
+    [X, X, X, X, X, RC, RC, RC, RC, RC, RC, X, X, X, X, X]
+];
+
+const hatSprite = [
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, HC, HC, HC, X, X, X, X, X, X, X, X],
+    [X, X, X, X, HC, HC, HC, HC, HC, X, X, X, X, X, X, X],
+    [X, X, X, X, HC, X, X, X, X, X, HC, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]
+];
+
+const staffSprite = [
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+    [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]
+];
+
+const ps = 12;
+const offsetX = 200 - 8*ps;
+const offsetY = 200 - 8*ps;
+
+function drawLayer(layer) {
+    for (let y = 0; y < 16; y++) {
+        for (let x = 0; x < 16; x++) {
+            if (layer[y][x]) {
+                ctx.fillStyle = layer[y][x];
+                ctx.fillRect(offsetX + x*ps, offsetY + y*ps, ps, ps);
+            }
+        }
+    }
+}
+
+drawLayer(bodySprite);
+drawLayer(robeSprite);
+drawLayer(hatSprite);
+drawLayer(staffSprite);
+
+</script>
+</body>
+</html>

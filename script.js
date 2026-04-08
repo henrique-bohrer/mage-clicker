@@ -77,6 +77,27 @@ let equipamentosEquipados = {
     staff: 'cajado_madeira'
 };
 
+// Poderes
+const poderesDB = {
+    'bola_fogo': { id: 'bola_fogo', nome: 'Bola de Fogo', tipo: 'poder', raridade: 'comum', elemento: 'fogo', stats: { dano: 5 } },
+    'rajada_agua': { id: 'rajada_agua', nome: 'Rajada de Água', tipo: 'poder', raridade: 'comum', elemento: 'agua', stats: { dano: 5 } },
+    'sopro_vento': { id: 'sopro_vento', nome: 'Sopro de Vento', tipo: 'poder', raridade: 'comum', elemento: 'ar', stats: { dano: 5 } },
+    'choque': { id: 'choque', nome: 'Choque', tipo: 'poder', raridade: 'comum', elemento: 'eletricidade', stats: { dano: 5 } },
+    'pedrada': { id: 'pedrada', nome: 'Pedrada', tipo: 'poder', raridade: 'comum', elemento: 'terra', stats: { dano: 5 } },
+    'raio_luz': { id: 'raio_luz', nome: 'Raio de Luz', tipo: 'poder', raridade: 'comum', elemento: 'luz', stats: { dano: 5 } },
+
+    // Nível 5+ poderes
+    'explosao_solar': { id: 'explosao_solar', nome: 'Explosão Solar', tipo: 'poder', raridade: 'incomum', elemento: 'fogo', stats: { dano: 15 } },
+    'tsunami': { id: 'tsunami', nome: 'Tsunami', tipo: 'poder', raridade: 'incomum', elemento: 'agua', stats: { dano: 15 } },
+
+    // Poderes de lootbox
+    'chuva_meteoros': { id: 'chuva_meteoros', nome: 'Chuva de Meteoros', tipo: 'poder', raridade: 'lendario', elemento: 'fogo', stats: { dano: 100 } },
+    'julgamento_divino': { id: 'julgamento_divino', nome: 'Julgamento Divino', tipo: 'poder', raridade: 'mitico', elemento: 'luz', stats: { dano: 500 } }
+};
+
+let poderesInventario = []; // IDs de poderes que o jogador possui
+let poderesEquipados = [null, null, null, null]; // IDs dos 4 poderes equipados
+
 // Caixas e Loots
 const caixas = [
     { id: 'c1', nome: 'Caixa de Madeira', custo: 10, cor: '#8b4513' },
@@ -165,12 +186,22 @@ let xMonstro = 300;
 let animacaoMagoAtacando = 0;
 let animacaoMagoMovendo = false;
 let particulasDano = [];
+let turnoJogador = true;
+let hpMagoBatalha = 100;
+let maxHpMagoBatalha = 100;
 
 const dungeons = [
-    { id: 'floresta', nome: 'Floresta Sombria', nivelReq: 1, hpMonstro: 50, bg: '#002200', monstros: ['Goblin', 'Slime', 'Lobo'], recompensaMana: 100, recompensaXP: 50 },
-    { id: 'caverna', nome: 'Caverna de Cristal', nivelReq: 3, hpMonstro: 250, bg: '#000033', monstros: ['Golem', 'Morcego', 'Esqueleto'], recompensaMana: 1000, recompensaXP: 200 },
-    { id: 'castelo', nome: 'Castelo Abandonado', nivelReq: 5, hpMonstro: 1500, bg: '#220000', monstros: ['Vampiro', 'Fantasma', 'Gárgula'], recompensaMana: 5000, recompensaXP: 1000, dropCaixa: 'c1' }
+    { id: 'floresta', nome: 'Floresta Sombria', nivelReq: 1, hpMonstro: 50, danoMonstro: 5, bg: '#002200', monstros: ['Goblin', 'Slime', 'Lobo'], recompensaMana: 100, recompensaXP: 50 },
+    { id: 'caverna', nome: 'Caverna de Cristal', nivelReq: 3, hpMonstro: 250, danoMonstro: 15, bg: '#000033', monstros: ['Golem', 'Morcego', 'Esqueleto'], recompensaMana: 1000, recompensaXP: 200 },
+    { id: 'castelo', nome: 'Castelo Abandonado', nivelReq: 5, hpMonstro: 1500, danoMonstro: 50, bg: '#220000', monstros: ['Vampiro', 'Fantasma', 'Gárgula'], recompensaMana: 5000, recompensaXP: 1000, dropCaixa: 'c1' }
 ];
+
+function logBatalha(msg) {
+    const log = document.getElementById('batalha-log');
+    if (log) {
+        log.innerHTML = msg;
+    }
+}
 
 // Inicialização
 window.onload = () => {
@@ -251,7 +282,9 @@ function salvarJogo() {
         upgrades: upgrades.map(up => up.nivel),
         quests: quests.map(q => ({ completada: q.completada })),
         inventario,
-        equipamentosEquipados
+        equipamentosEquipados,
+        poderesInventario,
+        poderesEquipados
     };
     localStorage.setItem('magosSave', JSON.stringify(dados));
 }
@@ -290,6 +323,8 @@ function carregarJogo() {
             }
             if (dados.inventario) inventario = dados.inventario;
             if (dados.equipamentosEquipados) equipamentosEquipados = dados.equipamentosEquipados;
+            if (dados.poderesInventario) poderesInventario = dados.poderesInventario;
+            if (dados.poderesEquipados) poderesEquipados = dados.poderesEquipados;
 
             if (dados.elementoSelecionado) {
                 elementoSelecionado = dados.elementoSelecionado;
@@ -355,40 +390,73 @@ function cliqueNoMago(x, y) {
     atualizarQuests();
 }
 
-// Configurar clique para atacar no modo aventura
-canvas.addEventListener('click', (e) => {
-    if (!modoAventura || !monstroAtual) return;
+// Modo aventura agora é por turnos (batalha)
+function renderizarBatalhaUI() {
+    const container = document.getElementById('poderes-batalha-container');
+    if (!container) return;
 
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+    container.innerHTML = '';
 
-    // Hitbox do monstro (área direita do canvas)
-    if (x > canvas.width / 2) {
-        atacarMonstro(x, y);
-    }
-});
-
-function atacarMonstro(x, y) {
-    if (!monstroAtual || animacaoMagoMovendo) return;
-
-    let dano = 1;
+    // Calcula dano base dos equipamentos
+    let danoBaseEquip = 0;
     Object.values(equipamentosEquipados).forEach(eqId => {
         const eq = equipamentosDB[eqId];
         if (eq && eq.stats && eq.stats.dano) {
             const mult = raridades[eq.raridade] ? raridades[eq.raridade].multi : 1;
-            dano += (eq.stats.dano * mult);
+            danoBaseEquip += (eq.stats.dano * mult);
         }
     });
 
-    dano = Math.floor(dano * multiplicadorPrestige);
+    poderesEquipados.forEach((pid) => {
+        const btn = document.createElement('button');
+        btn.className = 'upgrade-btn';
+        btn.style.padding = '5px';
 
+        if (pid) {
+            const poder = poderesDB[pid];
+            const mult = raridades[poder.raridade] ? raridades[poder.raridade].multi : 1;
+            let danoTotal = Math.floor((poder.stats.dano * mult + danoBaseEquip) * multiplicadorPrestige);
+
+            btn.style.borderColor = raridades[poder.raridade] ? raridades[poder.raridade].cor : '#fff';
+            btn.innerHTML = `
+                <span style="font-size: 0.6rem; color: ${btn.style.borderColor}">${poder.nome}</span><br>
+                <span style="font-size: 0.5rem; color: #ff5555;">Dano: ${danoTotal}</span>
+            `;
+            btn.onclick = () => turnoAtaqueMago(danoTotal, poder.nome);
+
+            if (!turnoJogador) {
+                btn.disabled = true;
+                btn.style.opacity = '0.5';
+            }
+        } else {
+            btn.innerHTML = `<span style="font-size: 0.5rem; color: #555;">Vazio</span>`;
+            btn.disabled = true;
+        }
+        container.appendChild(btn);
+    });
+
+    // Adicionar um ataque básico caso não tenha poderes
+    const temPoder = poderesEquipados.some(p => p !== null);
+    if (!temPoder) {
+        const btnBasico = document.createElement('button');
+        btnBasico.className = 'upgrade-btn';
+        let danoBasico = Math.floor((1 + danoBaseEquip) * multiplicadorPrestige);
+        btnBasico.innerHTML = `<span style="font-size: 0.6rem;">Ataque Básico</span><br><span style="font-size: 0.5rem; color: #ff5555;">Dano: ${danoBasico}</span>`;
+        btnBasico.onclick = () => turnoAtaqueMago(danoBasico, "Ataque Básico");
+        if (!turnoJogador) btnBasico.disabled = true;
+        container.appendChild(btnBasico);
+    }
+}
+
+function turnoAtaqueMago(dano, nomePoder) {
+    if (!monstroAtual || !turnoJogador || animacaoMagoMovendo) return;
+
+    turnoJogador = false;
     monstroAtual.hp -= dano;
     animacaoMagoAtacando = 10;
 
     playSound('click');
+    logBatalha(`Você usou <b>${nomePoder}</b> e causou <b>${dano}</b> de dano!`);
 
     particulasDano.push({
         texto: `-${dano}`,
@@ -398,8 +466,51 @@ function atacarMonstro(x, y) {
         vida: 30
     });
 
+    renderizarBatalhaUI();
+
     if (monstroAtual.hp <= 0) {
-        monstroDerrotado();
+        setTimeout(monstroDerrotado, 1000);
+    } else {
+        // Turno do monstro após 1 segundo
+        setTimeout(turnoAtaqueMonstro, 1000);
+    }
+}
+
+function turnoAtaqueMonstro() {
+    if (!monstroAtual || animacaoMagoMovendo) return;
+
+    let danoM = aventuraAtual.danoMonstro || 5;
+
+    // Um pouco de variação no dano
+    danoM = Math.floor(danoM * (0.8 + Math.random() * 0.4));
+    if (danoM < 1) danoM = 1;
+
+    hpMagoBatalha -= danoM;
+
+    playSound('click'); // idealmente som de hit no player
+    logBatalha(`<b>${monstroAtual.nome}</b> atacou e causou <b>${danoM}</b> de dano!`);
+
+    particulasDano.push({
+        texto: `-${danoM}`,
+        x: xMagoAventura + Math.random() * 20 - 10,
+        y: canvas.height / 2 - 20,
+        vy: -2,
+        vida: 30,
+        cor: '#ff0000'
+    });
+
+    // Simular pulo do monstro
+    xMonstro -= 20;
+    setTimeout(() => { xMonstro += 20; }, 100);
+
+    if (hpMagoBatalha <= 0) {
+        setTimeout(() => {
+            logBatalha("Você foi derrotado e fugiu da batalha...");
+            sairAventura();
+        }, 1500);
+    } else {
+        turnoJogador = true;
+        renderizarBatalhaUI();
     }
 }
 
@@ -481,6 +592,14 @@ function iniciarJogo(loaded = false) {
     initAudio();
     selectionScreen.classList.add('hidden');
     gameScreen.classList.remove('hidden');
+
+    if (!loaded) {
+        // Dar um poder inicial básico correspondente ao elemento selecionado
+        const poderesIniciais = Object.values(poderesDB).filter(p => p.raridade === 'comum' && p.elemento === elementoSelecionado);
+        if (poderesIniciais.length > 0 && poderesInventario.length === 0) {
+            poderesInventario.push(poderesIniciais[0].id);
+        }
+    }
 
     // Atualizar a variável CSS do scrollbar com a cor do elemento
     document.documentElement.style.setProperty('--element-color', coresElemento[elementoSelecionado]);
@@ -675,19 +794,19 @@ function desenharMago(x, y) {
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, RC, RC, X, X, X, X, X, RC, RC, X, X, X],
-            [X, X, X, X, RC, X, X, X, X, X, X, X, RC, X, X, X],
-            [X, X, X, X, RC, X, X, X, X, X, X, X, RC, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, RC, RC, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, RC, RC, RC, X, X, X],
-            [X, X, X, X, RC, X, X, X, X, RC_D, RC, RC, X, X, X, X],
-            [X, X, X, RC, RC, X, X, X, RH, RH, RH, RH, RH, X, X, X], // Highlight Belt
-            [X, X, X, RC, RC, RC, X, X, RC_D, RC, RC, X, RC, X, X, X],
-            [X, X, X, RC_D, RC, RC, X, RC, RC_D, RC, RC, X, RC, X, X, X],
-            [X, X, X, RC_D, RC_D, RC, RC, RC, RC_D, RC_D, RC, RC, X, X, X, X],
-            [X, X, X, X, RC, RC, RC, RC, RC, RC, RC_D, X, X, X, X, X],
-            [X, X, X, X, X, RC, RC, RC, RC, RC, RC_D, X, X, X, X, X],
-            [X, X, X, X, X, RC, RC, RC, RC, RC, RC_D, X, X, X, X, X]
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, RC, X, X, X, X, X, RC, RC, X, X, X, X],
+            [X, X, X, RC, RC, X, X, X, X, X, RC, RC, X, X, X, X],
+            [X, X, X, X, X, X, RH, RH, RH, RH, RH, X, X, X, X, X], // Highlight Belt
+            [X, X, X, X, X, RC, RC, RC, RC, RC, RC, RC, X, X, X, X],
+            [X, X, X, X, RC, RC, RC, RC, RC, RC, RC, RC, X, X, X, X],
+            [X, X, X, X, RC, RC, RC, RC, RC, RC, RC, RC, X, X, X, X],
+            [X, X, X, X, X, RC, RC, RC, RC, RC, RC, X, X, X, X, X],
+            [X, X, X, X, X, RC, RC, RC, RC, RC, RC, X, X, X, X, X]
         ];
     }
 
@@ -715,10 +834,10 @@ function desenharMago(x, y) {
     } else {
         // Default Hat
         hatSprite = [
-            [X, X, X, X, X, X, X, HC, HC, HC, X, X, X, X, X, X],
-            [X, X, X, X, X, HC, HC, HC, HC, HH, HC, HC, X, X, X, X], // Highlight Trim
-            [X, X, X, X, HC, HC, HC, HC, HC, HC, HH, HC, HC, X, X, X], // Highlight Trim
-            [X, X, X, X, HC, HC, X, X, X, X, X, HC, HC, HC, X, X],
+            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
+            [X, X, X, X, X, HC, HC, HC, X, X, X, X, X, X, X, X],
+            [X, X, X, X, HC, HC, HC, HC, HC, X, X, X, X, X, X, X],
+            [X, X, X, X, HC, X, X, X, X, X, HC, X, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
             [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
@@ -739,19 +858,19 @@ function desenharMago(x, y) {
         [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
         [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
         [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, SH, X, X, X, X, X, X, X, X, X, X], // Highlight Gem
-        [X, SC_D, X, X, SH, SH, X, X, X, X, X, X, X, X, X, X], // Highlight Gem
-        [X, SC_D, SC_D, X, X, SH, X, X, X, X, X, X, X, X, X, X], // Highlight Gem
-        [X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, SC, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, SC, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [SC, SC, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [SC, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]
+        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
+        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]
     ];
 
     // Draw all layers
@@ -809,14 +928,22 @@ function entrarAventura(id) {
     aventuraAtual = dungeons.find(d => d.id === id);
     modoAventura = true;
     xMagoAventura = 100;
+
+    // Reseta stats de batalha
+    hpMagoBatalha = maxHpMagoBatalha;
+    turnoJogador = true;
+
     gerarMonstro();
 
     const container = document.getElementById('aventuras-container');
-    const btnLeave = document.getElementById('btn-leave-adventure');
+    const batalhaUi = document.getElementById('batalha-ui');
+
     if (container) container.style.display = 'none';
-    if (btnLeave) {
-        btnLeave.classList.remove('hidden');
-        btnLeave.style.display = 'block';
+    if (batalhaUi) {
+        batalhaUi.classList.remove('hidden');
+        batalhaUi.style.display = 'block';
+        logBatalha(`Você entrou em ${aventuraAtual.nome}! Prepare-se...`);
+        renderizarBatalhaUI();
     }
 
     playSound('rebirth'); // Tocar som épico ao entrar na dungeon
@@ -828,11 +955,12 @@ function sairAventura() {
     monstroAtual = null;
 
     const container = document.getElementById('aventuras-container');
-    const btnLeave = document.getElementById('btn-leave-adventure');
+    const batalhaUi = document.getElementById('batalha-ui');
+
     if (container) container.style.display = 'block';
-    if (btnLeave) {
-        btnLeave.classList.add('hidden');
-        btnLeave.style.display = 'none';
+    if (batalhaUi) {
+        batalhaUi.classList.add('hidden');
+        batalhaUi.style.display = 'none';
     }
 }
 
@@ -847,12 +975,17 @@ function gerarMonstro() {
         cor: `hsl(${Math.random() * 360}, 70%, 50%)` // Cor aleatória pro monstro
     };
     xMonstro = canvas.width - 100;
+    turnoJogador = true;
+    logBatalha(`Um <b>${monstroAtual.nome}</b> selvagem apareceu!`);
+    renderizarBatalhaUI();
 }
 
 function monstroDerrotado() {
     // Recompensas
     mana += aventuraAtual.recompensaMana * multiplicadorPrestige;
     ganharXP(aventuraAtual.recompensaXP);
+
+    logBatalha(`Você derrotou o <b>${monstroAtual.nome}</b>! Ganhou mana e XP.`);
 
     if (aventuraAtual.dropCaixa && Math.random() < 0.2) { // 20% de chance de dropar caixa
         const caixaIdx = caixas.findIndex(c => c.id === aventuraAtual.dropCaixa);
@@ -867,6 +1000,10 @@ function monstroDerrotado() {
     // Iniciar animação do mago andando para a direita (próxima sala)
     monstroAtual = null;
     animacaoMagoMovendo = true;
+
+    // Esconder os botões durante a caminhada
+    const container = document.getElementById('poderes-batalha-container');
+    if(container) container.innerHTML = '';
 }
 
 function desenharAventura(deltaTime) {
@@ -902,6 +1039,22 @@ function desenharAventura(deltaTime) {
 
     desenharMago(xMagoAventura, canvas.height / 2);
 
+    // Desenhar barras de HP no topo
+    if (!animacaoMagoMovendo) {
+        // Mago HP
+        const barW = 100;
+        const barH = 10;
+        ctx.fillStyle = '#555';
+        ctx.fillRect(10, 10, barW, barH);
+        ctx.fillStyle = '#00ff00';
+        const hpMagoPct = Math.max(0, hpMagoBatalha / maxHpMagoBatalha);
+        ctx.fillRect(10, 10, barW * hpMagoPct, barH);
+        ctx.font = '8px "Press Start 2P"';
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'left';
+        ctx.fillText(`Mago: ${Math.floor(hpMagoBatalha)}`, 10, 30);
+    }
+
     // Desenhar monstro
     if (monstroAtual) {
         // Forma simples do monstro (um quadrado/blob)
@@ -914,7 +1067,7 @@ function desenharAventura(deltaTime) {
         ctx.fillRect(xMonstro - 10, canvas.height / 2 + 10, 5, 5);
         ctx.fillRect(xMonstro + 5, canvas.height / 2 + 10, 5, 5);
 
-        // HP Bar
+        // HP Bar Monstro
         const barW = 60;
         const barH = 8;
         const hpPct = Math.max(0, monstroAtual.hp / monstroAtual.hpMax);
@@ -1127,24 +1280,34 @@ function abrirCaixa(index) {
         else if (rand <= chanceR) raridadeGanha = 'raro';
         else if (rand <= chanceI) raridadeGanha = 'incomum';
 
-        // Filtrar equipamentos do BD com essa raridade
-        const equipsPossiveis = Object.values(equipamentosDB).filter(eq => eq.raridade === raridadeGanha);
-        if (equipsPossiveis.length === 0) {
-            // Fallback se não houver da raridade
-            raridadeGanha = 'comum';
+        // Sorteio: 50% chance equipamento, 50% chance poder
+        const isPoder = Math.random() > 0.5;
+        let dbSorteada = isPoder ? poderesDB : equipamentosDB;
+        let arrAlvo = isPoder ? poderesInventario : inventario;
+
+        // Filtrar itens do BD com essa raridade
+        let itensPossiveis = Object.values(dbSorteada).filter(item => item.raridade === raridadeGanha);
+        if (itensPossiveis.length === 0) {
+            // Se tentou poder e não tem dessa raridade, tenta equipamento. Se não tiver tbm, cai pra comum
+            dbSorteada = equipamentosDB;
+            arrAlvo = inventario;
+            itensPossiveis = Object.values(dbSorteada).filter(item => item.raridade === raridadeGanha);
+            if (itensPossiveis.length === 0) {
+                raridadeGanha = 'comum';
+                itensPossiveis = Object.values(dbSorteada).filter(item => item.raridade === raridadeGanha);
+            }
         }
 
-        const equipsFinais = Object.values(equipamentosDB).filter(eq => eq.raridade === raridadeGanha);
-        const eqGanho = equipsFinais[Math.floor(Math.random() * equipsFinais.length)];
+        const itemGanho = itensPossiveis[Math.floor(Math.random() * itensPossiveis.length)];
 
         // Efeito visual
         criarParticulas(50, canvas.width/2, canvas.height/2, true);
 
-        inventario.push(eqGanho.id);
+        arrAlvo.push(itemGanho.id);
 
         atualizarUI();
         renderizarInventario();
-        alert(`Você abriu a ${caixa.nome} e ganhou: ${eqGanho.nome} (${raridadeGanha})!`);
+        alert(`Você abriu a ${caixa.nome} e ganhou: ${itemGanho.nome} (${raridadeGanha})!`);
     } else {
         alert('Diamantes insuficientes!');
     }
@@ -1153,12 +1316,14 @@ function abrirCaixa(index) {
 function renderizarInventario() {
     const equipadosContainer = document.getElementById('equipados-container');
     const mochilaContainer = document.getElementById('mochila-container');
+    const poderesEquipadosContainer = document.getElementById('poderes-equipados-container');
     const filterSelect = document.getElementById('inv-filter');
 
     if (!equipadosContainer || !mochilaContainer) return;
 
     equipadosContainer.innerHTML = '';
     mochilaContainer.innerHTML = '';
+    if (poderesEquipadosContainer) poderesEquipadosContainer.innerHTML = '';
 
     const criarCardItem = (eqId, isEquipped) => {
         const eq = equipamentosDB[eqId];
@@ -1194,6 +1359,41 @@ function renderizarInventario() {
         return card;
     };
 
+    const criarCardPoder = (poderId, isEquipped, slotIndex = -1) => {
+        const poder = poderesDB[poderId];
+        if (!poder) return null;
+
+        const card = document.createElement('div');
+        card.className = `inv-item rarity-${poder.raridade} ${isEquipped ? 'equipped' : ''}`;
+
+        let statsStr = '';
+        const mult = raridades[poder.raridade] ? raridades[poder.raridade].multi : 1;
+        if (poder.stats.dano) statsStr += `Dano:${poder.stats.dano * mult} `;
+
+        card.innerHTML = `
+            <div class="item-name" style="color: ${raridades[poder.raridade] ? raridades[poder.raridade].cor : '#fff'}">${poder.nome}</div>
+            <div style="font-size: 0.4rem; color: #888;">Elm: ${poder.elemento}<br>${statsStr}</div>
+        `;
+
+        card.onclick = () => {
+            if (isEquipped) {
+                poderesEquipados[slotIndex] = null;
+            } else {
+                const emptySlot = poderesEquipados.findIndex(p => p === null);
+                if (emptySlot !== -1) {
+                    poderesEquipados[emptySlot] = poder.id;
+                } else {
+                    alert('Você já tem 4 poderes equipados. Desequipe um primeiro.');
+                    return;
+                }
+            }
+            playSound('click');
+            renderizarInventario();
+        };
+
+        return card;
+    };
+
     // Renderizar Equipados
     Object.values(equipamentosEquipados).forEach(eqId => {
         if (eqId) {
@@ -1202,22 +1402,115 @@ function renderizarInventario() {
         }
     });
 
-    // Renderizar Mochila
-    let itemsMochila = inventario.filter(id => !Object.values(equipamentosEquipados).includes(id));
-
-    // Ordenação
-    if (filterSelect && filterSelect.value === 'alpha') {
-        itemsMochila.sort((a, b) => equipamentosDB[a].nome.localeCompare(equipamentosDB[b].nome));
-    } else {
-        // Por Raridade
-        const raridadeRank = { 'mitico': 6, 'lendario': 5, 'epico': 4, 'raro': 3, 'incomum': 2, 'comum': 1 };
-        itemsMochila.sort((a, b) => raridadeRank[equipamentosDB[b].raridade] - raridadeRank[equipamentosDB[a].raridade]);
+    // Renderizar Poderes Equipados
+    for (let i = 0; i < 4; i++) {
+        const pid = poderesEquipados[i];
+        if (pid) {
+            const card = criarCardPoder(pid, true, i);
+            if (card && poderesEquipadosContainer) poderesEquipadosContainer.appendChild(card);
+        } else {
+            const empty = document.createElement('div');
+            empty.className = 'inv-item';
+            empty.style.borderStyle = 'dashed';
+            empty.style.display = 'flex';
+            empty.style.alignItems = 'center';
+            empty.style.justifyContent = 'center';
+            empty.innerHTML = `<span style="color:#555; font-size:0.5rem;">Vazio</span>`;
+            if (poderesEquipadosContainer) poderesEquipadosContainer.appendChild(empty);
+        }
     }
 
+    // Renderizar Mochila (Equipamentos)
+    let itemsMochila = inventario.filter(id => !Object.values(equipamentosEquipados).includes(id));
+    // Renderizar Mochila (Poderes)
+    // Para tratar duplicatas corretamente na mochila: precisamos contar quantos de cada tipo temos no inventário
+    // e subtrair os que estão equipados, mas uma forma mais simples no momento é iterar e pular a primeira ocorrencia equipada.
+
+    let poderesMochila = [];
+    let tempEquipados = [...poderesEquipados].filter(p => p !== null);
+
+    poderesInventario.forEach(pid => {
+        const indexEquipado = tempEquipados.indexOf(pid);
+        if (indexEquipado !== -1) {
+            tempEquipados.splice(indexEquipado, 1);
+        } else {
+            poderesMochila.push(pid);
+        }
+    });
+
+    // Ordenação combinada ou separada, vamos separar para ficar organizado
+    const raridadeRank = { 'mitico': 6, 'lendario': 5, 'epico': 4, 'raro': 3, 'incomum': 2, 'comum': 1 };
+
+    if (filterSelect && filterSelect.value === 'alpha') {
+        itemsMochila.sort((a, b) => equipamentosDB[a].nome.localeCompare(equipamentosDB[b].nome));
+        poderesMochila.sort((a, b) => poderesDB[a].nome.localeCompare(poderesDB[b].nome));
+    } else {
+        itemsMochila.sort((a, b) => raridadeRank[equipamentosDB[b].raridade] - raridadeRank[equipamentosDB[a].raridade]);
+        poderesMochila.sort((a, b) => raridadeRank[poderesDB[b].raridade] - raridadeRank[poderesDB[a].raridade]);
+    }
+
+    // Adiciona equipamentos na mochila
     itemsMochila.forEach(eqId => {
         const card = criarCardItem(eqId, false);
         if (card) mochilaContainer.appendChild(card);
     });
+
+    // Adiciona poderes na mochila visualmente separados
+    if (poderesMochila.length > 0) {
+        const sep = document.createElement('div');
+        sep.style.width = '100%';
+        sep.style.gridColumn = '1 / -1';
+        sep.style.marginTop = '10px';
+        sep.style.borderBottom = '1px dashed #555';
+        sep.innerHTML = '<span style="font-size:0.6rem; color:#aaa;">Poderes:</span>';
+        mochilaContainer.appendChild(sep);
+
+        poderesMochila.forEach(pid => {
+            const card = criarCardPoder(pid, false);
+            if (card) mochilaContainer.appendChild(card);
+        });
+    }
+}
+
+function equiparMelhoresPoderes() {
+    // Pegar todos os poderes disponíveis (inventário + equipados)
+    let todosPoderesDisponiveis = [...poderesInventario];
+
+    // Calcular o dano final de cada poder
+    const calcularDano = (pid) => {
+        const poder = poderesDB[pid];
+        if (!poder) return 0;
+        const mult = raridades[poder.raridade] ? raridades[poder.raridade].multi : 1;
+        return poder.stats.dano * mult;
+    };
+
+    // Ordenar do maior pro menor dano
+    todosPoderesDisponiveis.sort((a, b) => calcularDano(b) - calcularDano(a));
+
+    // Pegar os 4 melhores e remover duplicatas se o ID for o mesmo
+    // Mas assumindo que o jogador ganha IDs, como eles podem ter o mesmo id?
+    // Atualmente as caixas dão IDs puros, então podemos ter duplicatas no inventário.
+    // Vamos garantir que equipamos as 4 melhores instâncias
+
+    poderesEquipados = [null, null, null, null];
+    let equipadosCount = 0;
+
+    // Para lidar com duplicatas no array, usamos um rastreador de quais já pegamos
+    let usados = new Set();
+    // Isso se as coisas tiverem ids únicos, no clicker os IDs na mochila eram os mesmos da DB.
+    // Como os IDs são as chaves da DB e guardamos apenas a chave,
+    // um jogador pode ter ['fogo', 'fogo', 'agua'].
+
+    let disponiveisCopia = [...poderesInventario];
+    disponiveisCopia.sort((a, b) => calcularDano(b) - calcularDano(a));
+
+    for (let i = 0; i < disponiveisCopia.length && equipadosCount < 4; i++) {
+        poderesEquipados[equipadosCount] = disponiveisCopia[i];
+        equipadosCount++;
+    }
+
+    playSound('upgrade');
+    renderizarInventario();
 }
 
 function ganharXP(amount) {
@@ -1227,6 +1520,17 @@ function ganharXP(amount) {
         level++;
         xpMax = Math.floor(xpMax * 1.5);
         // Podia adicionar som de level up aqui
+
+        // Milestone a cada 5 níveis: ganha um poder aleatório do nível
+        if (level % 5 === 0) {
+            const poderesMilestone = Object.values(poderesDB).filter(p => p.raridade === 'incomum');
+            if (poderesMilestone.length > 0) {
+                const pGanho = poderesMilestone[Math.floor(Math.random() * poderesMilestone.length)];
+                poderesInventario.push(pGanho.id);
+                alert(`Parabéns! Você alcançou o Nível ${level} e desbloqueou o poder: ${pGanho.nome}!`);
+                renderizarInventario();
+            }
+        }
     }
 }
 
@@ -1257,7 +1561,7 @@ function atualizarUI() {
     if (percentage > 100) percentage = 100;
 
     rebirthProgressBar.style.width = percentage + '%';
-    rebirthPercentage.textContent = percentage.toFixed(1) + '%';
+    rebirthPercentage.textContent = percentage.toFixed(1) + '% (Req: 1T Mana)';
 
     if (mana >= rebirthCost) {
         rebirthBtn.disabled = false;

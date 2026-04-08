@@ -44,7 +44,7 @@
                     <div class="rebirth-progress-bg">
                         <div id="rebirth-progress-bar"></div>
                     </div>
-                    <p id="rebirth-percentage">0%</p>
+                    <p id="rebirth-percentage" style="font-size: 0.6rem;">0% (Requer 1T Mana)</p>
                     <button id="hard-reset-btn" onclick="hardReset()" style="margin-top: 5px; background: #880000; font-size: 0.6rem; padding: 5px;">Reiniciar Tudo</button>
                 </div>
             </header>
@@ -95,9 +95,14 @@
                                 <option value="alpha">Alfabética</option>
                             </select>
                         </div>
-                        <h3>Equipados</h3>
+                        <h3>Equipamentos</h3>
                         <div id="equipados-container" class="inv-grid">
                             <!-- Equipados via JS -->
+                        </div>
+                        <h3 style="margin-top: 15px;">Poderes Equipados (Aventura)</h3>
+                        <button onclick="equiparMelhoresPoderes()" style="margin-bottom: 5px; background: #550055; color: #fff; font-size: 0.6rem; padding: 5px;">Equipar o Melhor</button>
+                        <div id="poderes-equipados-container" class="inv-grid">
+                            <!-- Poderes equipados via JS -->
                         </div>
                         <h3 style="margin-top: 15px;">Mochila</h3>
                         <div id="mochila-container" class="inv-grid">
@@ -109,7 +114,14 @@
                         <div id="aventuras-container">
                             <!-- Aventuras via JS -->
                         </div>
-                        <button id="btn-leave-adventure" class="hidden" style="margin-top: 20px; width: 100%; padding: 10px; background: #555; color: white;" onclick="sairAventura()">Fugir da Batalha</button>
+                        <div id="batalha-ui" class="hidden">
+                            <h3 style="text-align: center; margin-bottom: 10px; color: #ff5555;">Batalha!</h3>
+                            <p id="batalha-log" style="font-size: 0.6rem; color: #fff; background: #222; padding: 10px; min-height: 40px; margin-bottom: 10px;"></p>
+                            <div id="poderes-batalha-container" class="inv-grid" style="grid-template-columns: 1fr 1fr; gap: 5px;">
+                                <!-- Botões de ataque dos poderes equipados -->
+                            </div>
+                            <button id="btn-leave-adventure" style="margin-top: 20px; width: 100%; padding: 10px; background: #555; color: white;" onclick="sairAventura()">Fugir da Batalha</button>
+                        </div>
                     </div>
                 </aside>
             </main>
