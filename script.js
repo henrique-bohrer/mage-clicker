@@ -713,15 +713,16 @@ function desenharMago(x, y) {
 
     ctx.scale(magoScale, magoScale);
 
-    // Desenhar o mago baseado na referência em 16x16 pixel art scale
-    const ps = 6; // pixel size
-    const offsetX = -8 * ps; // Centralizar
-    const offsetY = -8 * ps;
+    // Desenhar o mago baseado na referência em 32x32 pixel art scale
+    const ps = 4; // pixel size
+    const offsetX = -16 * ps; // Centralizar
+    const offsetY = -16 * ps;
 
     const C = coresElemento[elementoSelecionado]; // Cor principal do elemento
     const D = ajustarCor(C, 0.7); // Cor escura do elemento (sombra)
     const L = ajustarCor(C, 1.3); // Cor clara do elemento (brilho)
 
+    const Y = '#ffd700'; // Amarelo (faixa do chapéu)
     const S = '#f4a460'; // Skin/Pele
     const S_D = '#cd853f'; // Skin Dark
     const W = '#ffffff'; // White/Beard
@@ -736,16 +737,16 @@ function desenharMago(x, y) {
     // Primary color should always be the element color
     const HC = C; // Hat color
     const RC = C; // Robe color
-    const SC = C; // Staff color
 
     const HC_D = D;
     const RC_D = D;
-    const SC_D = D;
 
     // Highlight colors come from the equipment's rarity/definition
     const HH = hatEq ? raridades[hatEq.raridade].cor : L;
     const RH = robeEq ? raridades[robeEq.raridade].cor : L;
     const SH = staffEq ? raridades[staffEq.raridade].cor : L;
+    const SC = '#3e2723'; // Base de madeira escura para o cajado
+    const SC_D = '#1e110c';
 
     // A base marrom que o usuário quer para a roupa e chapéu básicos:
     const BR = '#8b4513'; // Brown (Marrom)
@@ -757,136 +758,89 @@ function desenharMago(x, y) {
     let RC_Final = (equipamentosEquipados.robe === 'roupa_basica') ? BR : RC;
     let RC_Dark_Final = (equipamentosEquipados.robe === 'roupa_basica') ? BR_D : RC_D;
 
+    const makeGrid = () => {
+        let grid = [];
+        for(let i=0; i<32; i++) grid.push(new Array(32).fill(X));
+        return grid;
+    };
+
     // Layer 1: Body / Head (Base, Face & Beard)
-    const bodySprite = [
-        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, S, S, S, S, S, X, X, X, X, X, X],
-        [X, X, X, X, X, S, B, S, B, S, W, X, X, X, X, X],
-        [X, X, X, X, X, S, S, S, S, S, W, W, X, X, X, X],
-        [X, X, X, X, X, W, W, W, W, W, W, W, X, X, X, X],
-        [X, X, X, X, X, W, W, W, W, W, W, W, X, X, X, X],
-        [X, S, X, X, X, W, W, W, W, W, W, X, X, X, X, X],
-        [X, X, X, X, X, X, W, W, W, W, X, X, X, X, X, X],
-        [X, X, X, X, X, X, X, X, X, X, X, X, X, S, S, X],
-        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]
-    ];
+    const bodySprite = makeGrid();
+    for(let x=13; x<=21; x++) bodySprite[13][x] = S;
+    bodySprite[14][13]=S; bodySprite[14][14]=S; bodySprite[14][15]=B; bodySprite[14][16]=S; bodySprite[14][17]=S; bodySprite[14][18]=S; bodySprite[14][19]=B; bodySprite[14][20]=S; bodySprite[14][21]=S;
+    for(let x=13; x<=21; x++) bodySprite[15][x] = S;
+    for(let x=13; x<=21; x++) bodySprite[16][x] = W;
+    for(let x=13; x<=21; x++) bodySprite[17][x] = W;
+    bodySprite[18][14]=W; bodySprite[18][15]=W; bodySprite[18][16]=W; bodySprite[18][17]=W; bodySprite[18][18]=W; bodySprite[18][19]=W; bodySprite[18][20]=W;
+    bodySprite[19][15]=W; bodySprite[19][16]=W; bodySprite[19][17]=W; bodySprite[19][18]=W; bodySprite[19][19]=W;
+    bodySprite[20][16]=W; bodySprite[20][17]=W; bodySprite[20][18]=W;
+    bodySprite[21][16]=W; bodySprite[21][17]=W; bodySprite[21][18]=W;
 
     // Layer 2: Robe
-    let robeSprite = [];
-    if (equipamentosEquipados.robe === 'shorts_hipster') {
-        robeSprite = [
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, RC_Final, X, X, X, X, X, X, X, X, RC_Final, RC_Final, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, RC_Final, X, X, X],
-            [X, X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X, X],
-            [X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X],
-            [X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X],
-            [X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X, X],
-            [X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X, X],
-            [X, X, X, X, X, S, S, X, X, S, S, X, X, X, X, X],
-            [X, X, X, X, X, S, S, X, X, S, S, X, X, X, X, X]
-        ];
-    } else {
-        // Default Robe (following the new image layout)
-        robeSprite = [
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, RC_Final, RC_Final, X, X, X, X, X, X, X, RC_Final, RC_Final, X, X, X],
-            [X, X, RC_Final, RC_Final, X, X, X, X, X, X, X, RC_Final, RC_Final, X, X, X],
-            [X, X, X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X, X],
-            [X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X],
-            [X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X],
-            [X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X],
-            [X, X, X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X, X],
-            [X, X, X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X, X],
-            [X, X, X, X, X, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, RC_Final, X, X, X, X, X]
-        ];
+    let robeSprite = makeGrid();
+    robeSprite[18][13]=RC_Final; robeSprite[18][21]=RC_Final;
+    robeSprite[19][12]=RC_Final; robeSprite[19][13]=RC_Final; robeSprite[19][20]=RC_Final; robeSprite[19][21]=RC_Final;
+    robeSprite[20][12]=RC_Final; robeSprite[20][13]=RC_Final; robeSprite[20][14]=RC_Final; robeSprite[20][19]=RC_Final; robeSprite[20][20]=RC_Final; robeSprite[20][21]=RC_Final;
+    robeSprite[21][13]=RC_Final; robeSprite[21][14]=RC_Final; robeSprite[21][15]=RC_Final; robeSprite[21][19]=RC_Final; robeSprite[21][20]=RC_Final; robeSprite[21][21]=RC_Final;
+    for(let y=22; y<=30; y++) {
+      robeSprite[y][14]=RC_Final; robeSprite[y][15]=RC_Final; robeSprite[y][19]=RC_Final; robeSprite[y][20]=RC_Final;
+      robeSprite[y][17] = RH; // faixa central recebe a cor de highlight/raridade da roupa
+      robeSprite[y][16] = RC_Dark_Final; robeSprite[y][18] = RC_Dark_Final;
     }
+    // Braço esquerdo segurando cajado
+    robeSprite[21][11]=RC_Final; robeSprite[21][12]=RC_Final;
+    robeSprite[22][11]=RC_Final; robeSprite[22][12]=RC_Final;
+    // Mão
+    bodySprite[21][9]=S; bodySprite[21][10]=S;
+    bodySprite[22][9]=S; bodySprite[22][10]=S;
+    // Pés
+    robeSprite[31][13]=RC_Dark_Final; robeSprite[31][14]=RC_Dark_Final; robeSprite[31][15]=RC_Dark_Final;
+    robeSprite[31][19]=RC_Dark_Final; robeSprite[31][20]=RC_Dark_Final; robeSprite[31][21]=RC_Dark_Final;
+
 
     // Layer 3: Hat
-    let hatSprite = [];
+    let hatSprite = makeGrid();
     if (equipamentosEquipados.hat === 'coroa_rei') {
-        hatSprite = [
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, HH, X, HH, X, HH, X, X, X, X, X],
-            [X, X, X, X, X, X, HC_Final, HC_Final, HC_Final, HC_Final, HC_Final, X, X, X, X, X],
-            [X, X, X, X, X, HC_Final, HC_Final, HC_Final, HC_Final, HC_Final, HC_Final, HC_Final, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]
-        ];
+        hatSprite[11][14] = HH; hatSprite[11][16] = HH; hatSprite[11][18] = HH; hatSprite[11][20] = HH;
+        for(let x=14; x<=20; x++) hatSprite[12][x] = HC_Final;
     } else {
-        // Default Hat (following the new image layout)
-        hatSprite = [
-            [X, X, X, X, X, HC_Final, HC_Final, HC_Final, HC_Final, X, X, X, X, X, X, X],
-            [X, X, X, X, HC_Final, HC_Final, HC_Final, HC_Final, HC_Final, X, X, X, X, X, X, X],
-            [X, X, X, HC_Final, B, HC_Final, HC_Final, HC_Final, HC_Final, HC_Final, X, X, X, X, X, X],
-            [X, X, X, HC_Final, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-            [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]
-        ];
+        hatSprite[4][14] = HC_Final; hatSprite[4][15] = HC_Final; hatSprite[4][16] = HC_Final; hatSprite[4][17] = HC_Final; hatSprite[4][18] = HC_Final;
+        hatSprite[5][12] = HC_Final; hatSprite[5][13] = HC_Final; hatSprite[5][14] = HC_Final; hatSprite[5][15] = HC_Final; hatSprite[5][16] = HC_Final; hatSprite[5][17] = HC_Final;
+        hatSprite[6][15] = HC_Final; hatSprite[6][16] = HC_Final; hatSprite[6][17] = HC_Final; hatSprite[6][18] = HC_Final;
+        hatSprite[7][15] = HC_Final; hatSprite[7][16] = HC_Final; hatSprite[7][17] = HC_Final; hatSprite[7][18] = HC_Final; hatSprite[7][19] = HC_Final;
+        hatSprite[8][15] = HC_Final; hatSprite[8][16] = HC_Final; hatSprite[8][17] = HC_Final; hatSprite[8][18] = HC_Final; hatSprite[8][19] = HC_Final;
+        hatSprite[9][14] = HC_Final; hatSprite[9][15] = HC_Final; hatSprite[9][16] = HC_Final; hatSprite[9][17] = HC_Final; hatSprite[9][18] = HC_Final; hatSprite[9][19] = HC_Final; hatSprite[9][20] = HC_Final;
+        hatSprite[10][14] = B; hatSprite[10][15] = HH; hatSprite[10][16] = HH; hatSprite[10][17] = HH; hatSprite[10][18] = HH; hatSprite[10][19] = B; hatSprite[10][20] = B;
+        hatSprite[11][14] = B; hatSprite[11][15] = HH; hatSprite[11][16] = HH; hatSprite[11][17] = HH; hatSprite[11][18] = HH; hatSprite[11][19] = B; hatSprite[11][20] = B;
+        for(let x=10; x<=24; x++) hatSprite[12][x] = HC_Final;
     }
 
-    // Layer 4: Staff (sticking down on the left side)
-    const staffSprite = [
-        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, SC, X, X, X, X, X, X, X, X, X, X, X, X, X],
-        [X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X]
-    ];
+    // Layer 4: Staff
+    const staffSprite = makeGrid();
+    for(let y=10; y<=31; y++) {
+      staffSprite[y][8] = SC; staffSprite[y][9] = SC;
+    }
+    // the staff zig-zag
+    staffSprite[15][8] = X; staffSprite[15][10] = SC;
+    staffSprite[16][8] = X; staffSprite[16][10] = SC;
+    staffSprite[17][8] = X; staffSprite[17][10] = SC;
+
+    // Staff top (Cristal/Orbe dependendo do cajado, mas seguindo a paleta de highlight)
+    staffSprite[8][8]=HH; staffSprite[8][9]=HH;
+    staffSprite[9][8]=HH; staffSprite[9][9]=HH;
+    for(let x=7; x<=10; x++) { staffSprite[6][x]=SH; staffSprite[7][x]=SH; }
+
+    // Magical particles based on element
+    const P = C;
+    staffSprite[2][8]=P; staffSprite[3][8]=P; staffSprite[2][9]=P; staffSprite[3][9]=P;
+    staffSprite[4][5]=P; staffSprite[5][5]=P; staffSprite[4][6]=P; staffSprite[5][6]=P;
+    staffSprite[2][12]=P; staffSprite[3][12]=P; staffSprite[2][13]=P; staffSprite[3][13]=P;
+    staffSprite[6][12]=P; staffSprite[7][12]=P; staffSprite[6][13]=P; staffSprite[7][13]=P;
 
     // Draw all layers
     const drawSprite = (spriteLayer) => {
-        for (let y = 0; y < 16; y++) {
-            for (let x = 0; x < 16; x++) {
+        for (let y = 0; y < 32; y++) {
+            for (let x = 0; x < 32; x++) {
                 const cor = spriteLayer[y][x];
                 if (cor !== null) {
                     ctx.fillStyle = cor;
