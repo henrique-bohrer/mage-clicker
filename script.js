@@ -189,6 +189,12 @@ let particulasDano = [];
 let turnoJogador = true;
 let hpMagoBatalha = 100;
 let maxHpMagoBatalha = 100;
+let salaAtual = 1;
+let salaTipo = 'monstro'; // 'monstro' ou 'evento'
+let opcoesEvento = [];
+let buffsAventura = {
+    tiroDuplo: false
+};
 
 const dungeons = [
     { id: 'floresta', nome: 'Floresta Sombria', nivelReq: 1, hpMonstro: 50, danoMonstro: 5, bg: '#002200', monstros: ['Goblin', 'Slime', 'Lobo'], recompensaMana: 100, recompensaXP: 50 },
@@ -397,54 +403,152 @@ function renderizarBatalhaUI() {
 
     container.innerHTML = '';
 
-    // Calcula dano base dos equipamentos
-    let danoBaseEquip = 0;
-    Object.values(equipamentosEquipados).forEach(eqId => {
-        const eq = equipamentosDB[eqId];
-        if (eq && eq.stats && eq.stats.dano) {
-            const mult = raridades[eq.raridade] ? raridades[eq.raridade].multi : 1;
-            danoBaseEquip += (eq.stats.dano * mult);
-        }
-    });
+    if (salaTipo === 'evento') {
+        container.style.gridTemplateColumns = '1fr';
 
-    poderesEquipados.forEach((pid) => {
-        const btn = document.createElement('button');
-        btn.className = 'upgrade-btn';
-        btn.style.padding = '5px';
+        opcoesEvento.forEach((opcao, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'upgrade-btn';
+            btn.style.padding = '10px';
+            btn.style.marginBottom = '5px';
+            btn.style.borderColor = '#d4af37'; // Ouro
 
-        if (pid) {
-            const poder = poderesDB[pid];
-            const mult = raridades[poder.raridade] ? raridades[poder.raridade].multi : 1;
-            let danoTotal = Math.floor((poder.stats.dano * mult + danoBaseEquip) * multiplicadorPrestige);
-
-            btn.style.borderColor = raridades[poder.raridade] ? raridades[poder.raridade].cor : '#fff';
             btn.innerHTML = `
-                <span style="font-size: 0.6rem; color: ${btn.style.borderColor}">${poder.nome}</span><br>
-                <span style="font-size: 0.5rem; color: #ff5555;">Dano: ${danoTotal}</span>
+                <span style="font-size: 0.6rem; color: #d4af37">${opcao.nome}</span><br>
+                <span style="font-size: 0.5rem; color: #aaa;">${opcao.desc}</span>
             `;
-            btn.onclick = () => turnoAtaqueMago(danoTotal, poder.nome, poder.elemento);
 
-            if (!turnoJogador) {
-                btn.disabled = true;
-                btn.style.opacity = '0.5';
+            btn.onclick = () => {
+                escolherEvento(index);
+            };
+
+            container.appendChild(btn);
+        });
+
+    } else {
+        container.style.gridTemplateColumns = '1fr 1fr';
+
+        // Calcula dano base dos equipamentos
+        let danoBaseEquip = 0;
+        Object.values(equipamentosEquipados).forEach(eqId => {
+            const eq = equipamentosDB[eqId];
+            if (eq && eq.stats && eq.stats.dano) {
+                const mult = raridades[eq.raridade] ? raridades[eq.raridade].multi : 1;
+                danoBaseEquip += (eq.stats.dano * mult);
             }
-        } else {
-            btn.innerHTML = `<span style="font-size: 0.5rem; color: #555;">Vazio</span>`;
-            btn.disabled = true;
-        }
-        container.appendChild(btn);
-    });
+        });
 
-    // Adicionar um ataque básico caso não tenha poderes
-    const temPoder = poderesEquipados.some(p => p !== null);
-    if (!temPoder) {
-        const btnBasico = document.createElement('button');
-        btnBasico.className = 'upgrade-btn';
-        let danoBasico = Math.floor((1 + danoBaseEquip) * multiplicadorPrestige);
-        btnBasico.innerHTML = `<span style="font-size: 0.6rem;">Ataque Básico</span><br><span style="font-size: 0.5rem; color: #ff5555;">Dano: ${danoBasico}</span>`;
-        btnBasico.onclick = () => turnoAtaqueMago(danoBasico, "Ataque Básico", 'fisico');
-        if (!turnoJogador) btnBasico.disabled = true;
-        container.appendChild(btnBasico);
+        poderesEquipados.forEach((pid) => {
+            const btn = document.createElement('button');
+            btn.className = 'upgrade-btn';
+            btn.style.padding = '5px';
+
+            if (pid) {
+                const poder = poderesDB[pid];
+                const mult = raridades[poder.raridade] ? raridades[poder.raridade].multi : 1;
+                let danoTotal = Math.floor((poder.stats.dano * mult + danoBaseEquip) * multiplicadorPrestige);
+
+                btn.style.borderColor = raridades[poder.raridade] ? raridades[poder.raridade].cor : '#fff';
+                btn.innerHTML = `
+                    <span style="font-size: 0.6rem; color: ${btn.style.borderColor}">${poder.nome}</span><br>
+                    <span style="font-size: 0.5rem; color: #ff5555;">Dano: ${danoTotal}</span>
+                `;
+                btn.onclick = () => turnoAtaqueMago(danoTotal, poder.nome, poder.elemento);
+
+                if (!turnoJogador) {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.5';
+                }
+            } else {
+                btn.innerHTML = `<span style="font-size: 0.5rem; color: #555;">Vazio</span>`;
+                btn.disabled = true;
+            }
+            container.appendChild(btn);
+        });
+
+        // Adicionar um ataque básico caso não tenha poderes
+        const temPoder = poderesEquipados.some(p => p !== null);
+        if (!temPoder) {
+            const btnBasico = document.createElement('button');
+            btnBasico.className = 'upgrade-btn';
+            let danoBasico = Math.floor((1 + danoBaseEquip) * multiplicadorPrestige);
+            btnBasico.innerHTML = `<span style="font-size: 0.6rem;">Ataque Básico</span><br><span style="font-size: 0.5rem; color: #ff5555;">Dano: ${danoBasico}</span>`;
+            btnBasico.onclick = () => turnoAtaqueMago(danoBasico, "Ataque Básico", 'fisico');
+            if (!turnoJogador) btnBasico.disabled = true;
+            container.appendChild(btnBasico);
+        }
+    }
+
+    renderizarMapaAventura();
+}
+
+function renderizarMapaAventura() {
+    let mapaContainer = document.getElementById('mapa-aventura');
+
+    if (!mapaContainer) {
+        // Cria a div do mapa se não existir
+        const botoesAventura = document.getElementById('poderes-batalha-container').parentNode;
+        mapaContainer = document.createElement('div');
+        mapaContainer.id = 'mapa-aventura';
+        mapaContainer.style.marginTop = '15px';
+        mapaContainer.style.textAlign = 'center';
+        mapaContainer.style.fontFamily = '"Press Start 2P", cursive';
+        mapaContainer.style.fontSize = '0.5rem';
+        mapaContainer.style.color = '#fff';
+        mapaContainer.style.display = 'flex';
+        mapaContainer.style.alignItems = 'center';
+        mapaContainer.style.justifyContent = 'center';
+        mapaContainer.style.gap = '5px';
+
+        // Inserir antes do botão de fuga
+        botoesAventura.insertBefore(mapaContainer, document.getElementById('btn-leave-adventure'));
+    }
+
+    mapaContainer.innerHTML = '';
+
+    // Mostrar as próximas 5 salas
+    const inicioBloco = Math.floor((salaAtual - 1) / 5) * 5 + 1;
+
+    const titulo = document.createElement('div');
+    titulo.innerText = 'Mapa: ';
+    titulo.style.marginRight = '5px';
+    mapaContainer.appendChild(titulo);
+
+    for (let i = 0; i < 5; i++) {
+        const numSala = inicioBloco + i;
+        const icon = document.createElement('div');
+        icon.style.width = '15px';
+        icon.style.height = '15px';
+        icon.style.display = 'inline-block';
+        icon.style.border = '1px solid #555';
+
+        if (numSala % 5 === 0) {
+            // Evento/Baú
+            icon.style.backgroundColor = '#d4af37'; // Dourado
+            icon.title = 'Área de Descanso';
+        } else {
+            // Monstro
+            icon.style.backgroundColor = '#ff5555'; // Vermelho
+            icon.title = 'Monstro';
+        }
+
+        if (numSala === salaAtual) {
+            icon.style.border = '2px solid #fff';
+            icon.style.boxShadow = '0 0 5px #fff';
+            icon.style.transform = 'scale(1.2)';
+        } else if (numSala < salaAtual) {
+            icon.style.opacity = '0.3';
+        }
+
+        mapaContainer.appendChild(icon);
+
+        if (i < 4) {
+            const traco = document.createElement('div');
+            traco.style.width = '10px';
+            traco.style.height = '2px';
+            traco.style.backgroundColor = '#555';
+            mapaContainer.appendChild(traco);
+        }
     }
 }
 
@@ -463,11 +567,25 @@ function turnoAtaqueMago(dano, nomePoder, elementoPoder) {
     const endX = xMonstro;
     const endY = canvas.height / 2;
 
-    criarAnimacaoAtaque(elementoPoder, startX, startY, endX, endY, dano, nomePoder);
+    let temTiroDuplo = buffsAventura.tiroDuplo;
+
+    if (temTiroDuplo) {
+        criarAnimacaoAtaque(elementoPoder, startX, startY - 10, endX, endY - 10, dano, nomePoder, false);
+        setTimeout(() => {
+            if (monstroAtual) {
+                playSound('click');
+                criarAnimacaoAtaque(elementoPoder, startX, startY + 10, endX, endY + 10, dano, nomePoder, true);
+            }
+        }, 200); // Lança o segundo tiro com delay
+    } else {
+        criarAnimacaoAtaque(elementoPoder, startX, startY, endX, endY, dano, nomePoder, true);
+    }
 }
 
-function aplicarDanoMonstro(dano, nomePoder) {
-    if (!monstroAtual) return;
+let monstroMorrendo = false;
+
+function aplicarDanoMonstro(dano, nomePoder, isUltimo) {
+    if (!monstroAtual || monstroMorrendo) return;
 
     monstroAtual.hp -= dano;
 
@@ -484,14 +602,15 @@ function aplicarDanoMonstro(dano, nomePoder) {
     renderizarBatalhaUI();
 
     if (monstroAtual.hp <= 0) {
+        monstroMorrendo = true;
         setTimeout(monstroDerrotado, 500);
-    } else {
-        // Turno do monstro
+    } else if (isUltimo) {
+        // Turno do monstro só se for o ultimo hit do ataque
         setTimeout(turnoAtaqueMonstro, 500);
     }
 }
 
-function criarAnimacaoAtaque(elemento, xStart, yStart, xEnd, yEnd, dano, nomePoder) {
+function criarAnimacaoAtaque(elemento, xStart, yStart, xEnd, yEnd, dano, nomePoder, isUltimo = true) {
     let tipoAnimacao = 'projetil';
     let corPrincipal = '#fff';
 
@@ -520,6 +639,7 @@ function criarAnimacaoAtaque(elemento, xStart, yStart, xEnd, yEnd, dano, nomePod
         progresso: 0,
         dano: dano,
         nomePoder: nomePoder,
+        isUltimo: isUltimo,
         rastro: [] // para guardar rastro de fogo/água
     });
 }
@@ -940,12 +1060,15 @@ function entrarAventura(id) {
     aventuraAtual = dungeons.find(d => d.id === id);
     modoAventura = true;
     xMagoAventura = 100;
+    salaAtual = 1;
+    salaTipo = 'monstro';
+    buffsAventura = { tiroDuplo: false };
 
     // Reseta stats de batalha
     hpMagoBatalha = maxHpMagoBatalha;
     turnoJogador = true;
 
-    gerarMonstro();
+    avancarSala(true);
 
     const container = document.getElementById('aventuras-container');
     const batalhaUi = document.getElementById('batalha-ui');
@@ -976,9 +1099,22 @@ function sairAventura() {
     }
 }
 
+function avancarSala(isPrimeira = false) {
+    if (!isPrimeira) {
+        salaAtual++;
+    }
+
+    if (salaAtual > 1 && salaAtual % 5 === 0) {
+        gerarEvento();
+    } else {
+        gerarMonstro();
+    }
+}
+
 function gerarMonstro() {
     if (!aventuraAtual) return;
 
+    salaTipo = 'monstro';
     animacaoMagoMovendo = false;
     monstroAtual = {
         nome: aventuraAtual.monstros[Math.floor(Math.random() * aventuraAtual.monstros.length)],
@@ -988,8 +1124,74 @@ function gerarMonstro() {
     };
     xMonstro = canvas.width - 100;
     turnoJogador = true;
-    logBatalha(`Um <b>${monstroAtual.nome}</b> selvagem apareceu!`);
+    monstroMorrendo = false;
+    logBatalha(`Um <b>${monstroAtual.nome}</b> selvagem apareceu! Sala ${salaAtual}`);
     renderizarBatalhaUI();
+}
+
+function gerarEvento() {
+    if (!aventuraAtual) return;
+
+    salaTipo = 'evento';
+    animacaoMagoMovendo = false;
+    monstroAtual = null;
+    turnoJogador = false; // Não tem turno de ataque
+
+    // Gerar 3 opções de evento
+    opcoesEvento = [];
+
+    // Possíveis opções
+    const possiveis = [
+        { tipo: 'pocao', nome: 'Poção de Vida', desc: 'Restaura todo o HP.' },
+        { tipo: 'tiroDuplo', nome: 'Magia Dupla', desc: 'Ataques lançam 2x projéteis!' }
+    ];
+
+    // Pegar poderes do elemento atual
+    const poderesElemento = Object.values(poderesDB).filter(p => p.elemento === elementoSelecionado);
+    if (poderesElemento.length > 0) {
+        const poderRandom = poderesElemento[Math.floor(Math.random() * poderesElemento.length)];
+        possiveis.push({ tipo: 'poder', nome: poderRandom.nome, desc: `Receba: ${poderRandom.nome}`, id: poderRandom.id });
+    }
+
+    while(opcoesEvento.length < 3) {
+        if (opcoesEvento.length === 0) opcoesEvento.push(possiveis[0]); // Sempre uma poção garantida
+        else if (opcoesEvento.length === 1) opcoesEvento.push(possiveis[1]); // Sempre buff garantido
+        else {
+            if (possiveis[2]) opcoesEvento.push(possiveis[2]); // Poder garantido
+            else opcoesEvento.push({ tipo: 'mana', nome: 'Cristal de Mana', desc: 'Ganha mana bônus.' });
+        }
+    }
+
+    // Embaralhar
+    opcoesEvento.sort(() => Math.random() - 0.5);
+
+    logBatalha(`Você encontrou uma área de descanso! Escolha uma recompensa.`);
+    renderizarBatalhaUI();
+}
+
+function escolherEvento(index) {
+    const escolhido = opcoesEvento[index];
+
+    if (escolhido.tipo === 'pocao') {
+        hpMagoBatalha = maxHpMagoBatalha;
+        logBatalha(`Você bebeu a poção e restaurou seu HP!`);
+    } else if (escolhido.tipo === 'tiroDuplo') {
+        buffsAventura.tiroDuplo = true;
+        logBatalha(`Você sente a magia fluindo! Tiros duplos ativados.`);
+    } else if (escolhido.tipo === 'poder') {
+        poderesInventario.push(escolhido.id);
+        logBatalha(`Você obteve o poder: ${escolhido.nome}!`);
+    } else if (escolhido.tipo === 'mana') {
+        mana += aventuraAtual.recompensaMana * 5;
+        logBatalha(`Você encontrou um cristal e ganhou bastante mana!`);
+    }
+
+    playSound('upgrade');
+    opcoesEvento = [];
+
+    // Continua a aventura
+    animacaoMagoMovendo = true;
+    monstroMorrendo = false;
 }
 
 function monstroDerrotado() {
@@ -1036,7 +1238,7 @@ function desenharAventura(deltaTime) {
         if (xMagoAventura > canvas.width + 50) {
             // Saiu da tela, reseta e gera outro
             xMagoAventura = -50;
-            gerarMonstro();
+            avancarSala();
         }
     } else {
         // Mago posicionado pra batalha
@@ -1067,8 +1269,8 @@ function desenharAventura(deltaTime) {
         ctx.fillText(`Mago: ${Math.floor(hpMagoBatalha)}`, 10, 30);
     }
 
-    // Desenhar monstro
-    if (monstroAtual) {
+    // Desenhar monstro ou Evento
+    if (salaTipo === 'monstro' && monstroAtual) {
         // Forma simples do monstro (um quadrado/blob)
         ctx.fillStyle = monstroAtual.cor;
         const sSize = 40 + Math.sin(lastTime * 0.005) * 5; // respira
@@ -1092,6 +1294,22 @@ function desenharAventura(deltaTime) {
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
         ctx.fillText(monstroAtual.nome, xMonstro, canvas.height / 2 - 50);
+    } else if (salaTipo === 'evento') {
+        // Desenha um baú / fogueira
+        const evX = canvas.width - 150;
+        const evY = canvas.height / 2 + 20;
+
+        // Baú
+        ctx.fillStyle = '#8b4513';
+        ctx.fillRect(evX, evY, 40, 30);
+        ctx.fillStyle = '#d4af37'; // Ouro/Detalhe
+        ctx.fillRect(evX - 2, evY + 10, 44, 4);
+        ctx.fillRect(evX + 16, evY + 8, 8, 8); // Fechadura
+
+        ctx.font = '10px "Press Start 2P"';
+        ctx.fillStyle = '#ffff00';
+        ctx.textAlign = 'center';
+        ctx.fillText('Recompensa!', evX + 20, evY - 20);
     }
 
     // Animações de Projéteis / Poderes
@@ -1101,7 +1319,7 @@ function desenharAventura(deltaTime) {
 
         if (proj.progresso >= 1) {
             // Atingiu o alvo!
-            aplicarDanoMonstro(proj.dano, proj.nomePoder);
+            aplicarDanoMonstro(proj.dano, proj.nomePoder, proj.isUltimo);
             // Efeito visual de impacto
             criarParticulas(20, proj.targetX, proj.targetY, true);
             return false; // Remove da lista
