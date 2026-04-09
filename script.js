@@ -522,7 +522,14 @@ function renderizarMapaAventura() {
         icon.style.display = 'inline-block';
         icon.style.border = '1px solid #555';
 
-        if (numSala % 5 === 0) {
+        if (numSala % 10 === 0) {
+            // Boss
+            icon.style.backgroundColor = '#aa00ff'; // Roxo/Magenta
+            icon.style.borderRadius = '50%';
+            icon.title = 'Chefe de Camada';
+            icon.style.width = '20px'; // Boss icon slightly bigger
+            icon.style.height = '20px';
+        } else if (numSala % 5 === 0) {
             // Evento/Baú
             icon.style.backgroundColor = '#d4af37'; // Dourado
             icon.title = 'Área de Descanso';
@@ -647,7 +654,7 @@ function criarAnimacaoAtaque(elemento, xStart, yStart, xEnd, yEnd, dano, nomePod
 function turnoAtaqueMonstro() {
     if (!monstroAtual || animacaoMagoMovendo) return;
 
-    let danoM = aventuraAtual.danoMonstro || 5;
+    let danoM = monstroAtual.dano || aventuraAtual.danoMonstro || 5;
 
     // Um pouco de variação no dano
     danoM = Math.floor(danoM * (0.8 + Math.random() * 0.4));
@@ -1104,11 +1111,36 @@ function avancarSala(isPrimeira = false) {
         salaAtual++;
     }
 
-    if (salaAtual > 1 && salaAtual % 5 === 0) {
+    if (salaAtual > 1 && salaAtual % 10 === 0) {
+        gerarBoss();
+    } else if (salaAtual > 1 && salaAtual % 5 === 0) {
         gerarEvento();
     } else {
         gerarMonstro();
     }
+}
+
+function gerarBoss() {
+    if (!aventuraAtual) return;
+
+    salaTipo = 'boss';
+    animacaoMagoMovendo = false;
+
+    const bossTemplate = aventuraAtual.boss;
+
+    monstroAtual = {
+        nome: bossTemplate.nome,
+        hpMax: bossTemplate.hp,
+        hp: bossTemplate.hp,
+        dano: bossTemplate.dano,
+        cor: bossTemplate.cor
+    };
+
+    xMonstro = canvas.width - 150; // Um pouco mais longe porque é grande
+    turnoJogador = true;
+    monstroMorrendo = false;
+    logBatalha(`⚠️ CUIDADO! <b>${monstroAtual.nome}</b> CHEGOU! Sala ${salaAtual}`);
+    renderizarBatalhaUI();
 }
 
 function gerarMonstro() {
@@ -1195,13 +1227,20 @@ function escolherEvento(index) {
 }
 
 function monstroDerrotado() {
+    let multBoss = salaTipo === 'boss' ? 10 : 1;
+
     // Recompensas
-    mana += aventuraAtual.recompensaMana * multiplicadorPrestige;
-    ganharXP(aventuraAtual.recompensaXP);
+    mana += (aventuraAtual.recompensaMana * multBoss) * multiplicadorPrestige;
+    ganharXP(aventuraAtual.recompensaXP * multBoss);
 
     logBatalha(`Você derrotou o <b>${monstroAtual.nome}</b>! Ganhou mana e XP.`);
 
-    if (aventuraAtual.dropCaixa && Math.random() < 0.2) { // 20% de chance de dropar caixa
+    if (salaTipo === 'boss' && aventuraAtual.id === 'vazio') {
+        logBatalha(`🎉 VOCÊ DERROTOU O DEUS DO VAZIO! VOCÊ É UM MESTRE MAGO! 🎉`);
+    }
+
+    let chanceDrop = salaTipo === 'boss' ? 1.0 : 0.2; // Boss dropa caixa garantido se tiver
+    if (aventuraAtual.dropCaixa && Math.random() < chanceDrop) {
         const caixaIdx = caixas.findIndex(c => c.id === aventuraAtual.dropCaixa);
         if (caixaIdx >= 0) {
             abrirCaixa(caixaIdx); // Simula abrir a caixa grátis
@@ -1209,7 +1248,7 @@ function monstroDerrotado() {
     }
 
     playSound('upgrade');
-    criarFloatingText(`Vitória!`, canvas.width/2, canvas.height/2 - 50);
+    criarFloatingText(salaTipo === 'boss' ? `CHEFE DERROTADO!` : `Vitória!`, canvas.width/2, canvas.height/2 - 50);
 
     // Iniciar animação do mago andando para a direita (próxima sala)
     monstroAtual = null;
@@ -1269,31 +1308,58 @@ function desenharAventura(deltaTime) {
         ctx.fillText(`Mago: ${Math.floor(hpMagoBatalha)}`, 10, 30);
     }
 
-    // Desenhar monstro ou Evento
-    if (salaTipo === 'monstro' && monstroAtual) {
-        // Forma simples do monstro (um quadrado/blob)
+    // Desenhar monstro, Boss ou Evento
+    if ((salaTipo === 'monstro' || salaTipo === 'boss') && monstroAtual) {
+        const isBoss = salaTipo === 'boss';
         ctx.fillStyle = monstroAtual.cor;
-        const sSize = 40 + Math.sin(lastTime * 0.005) * 5; // respira
+
+        const baseSize = isBoss ? 80 : 40;
+        const breath = Math.sin(lastTime * (isBoss ? 0.003 : 0.005)) * (isBoss ? 10 : 5);
+        const sSize = baseSize + breath;
+
         ctx.fillRect(xMonstro - sSize/2, canvas.height / 2 - sSize/2 + 20, sSize, sSize);
 
         // Olhos
         ctx.fillStyle = '#000';
-        ctx.fillRect(xMonstro - 10, canvas.height / 2 + 10, 5, 5);
-        ctx.fillRect(xMonstro + 5, canvas.height / 2 + 10, 5, 5);
+        const eyeOffset = isBoss ? 20 : 10;
+        const eyeSize = isBoss ? 10 : 5;
+        const eyeYOffset = isBoss ? 0 : 10;
+        ctx.fillRect(xMonstro - eyeOffset, canvas.height / 2 + eyeYOffset, eyeSize, eyeSize);
+        ctx.fillRect(xMonstro + eyeOffset - eyeSize/2, canvas.height / 2 + eyeYOffset, eyeSize, eyeSize);
 
-        // HP Bar Monstro
-        const barW = 60;
-        const barH = 8;
-        const hpPct = Math.max(0, monstroAtual.hp / monstroAtual.hpMax);
-        ctx.fillStyle = '#555';
-        ctx.fillRect(xMonstro - barW/2, canvas.height / 2 - 40, barW, barH);
-        ctx.fillStyle = '#f00';
-        ctx.fillRect(xMonstro - barW/2, canvas.height / 2 - 40, barW * hpPct, barH);
+        if (isBoss) {
+            // Boss HP Bar (Grande, no topo central)
+            const barW = 300;
+            const barH = 15;
+            const hpPct = Math.max(0, monstroAtual.hp / monstroAtual.hpMax);
+            const barX = canvas.width / 2 - barW / 2;
+            const barY = 10;
 
-        ctx.font = '10px "Press Start 2P"';
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.fillText(monstroAtual.nome, xMonstro, canvas.height / 2 - 50);
+            ctx.fillStyle = '#555';
+            ctx.fillRect(barX, barY, barW, barH);
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(barX, barY, barW * hpPct, barH);
+
+            ctx.font = '12px "Press Start 2P"';
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${monstroAtual.nome} (${Math.floor(monstroAtual.hp)}/${monstroAtual.hpMax})`, canvas.width / 2, barY + 30);
+
+        } else {
+            // HP Bar Monstro Normal
+            const barW = 60;
+            const barH = 8;
+            const hpPct = Math.max(0, monstroAtual.hp / monstroAtual.hpMax);
+            ctx.fillStyle = '#555';
+            ctx.fillRect(xMonstro - barW/2, canvas.height / 2 - 40, barW, barH);
+            ctx.fillStyle = '#f00';
+            ctx.fillRect(xMonstro - barW/2, canvas.height / 2 - 40, barW * hpPct, barH);
+
+            ctx.font = '10px "Press Start 2P"';
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.fillText(monstroAtual.nome, xMonstro, canvas.height / 2 - 50);
+        }
     } else if (salaTipo === 'evento') {
         // Desenha um baú / fogueira
         const evX = canvas.width - 150;
