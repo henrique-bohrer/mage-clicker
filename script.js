@@ -422,7 +422,7 @@ function renderizarBatalhaUI() {
                 <span style="font-size: 0.6rem; color: ${btn.style.borderColor}">${poder.nome}</span><br>
                 <span style="font-size: 0.5rem; color: #ff5555;">Dano: ${danoTotal}</span>
             `;
-            btn.onclick = () => turnoAtaqueMago(danoTotal, poder.nome);
+            btn.onclick = () => turnoAtaqueMago(danoTotal, poder.nome, poder.elemento);
 
             if (!turnoJogador) {
                 btn.disabled = true;
@@ -442,20 +442,35 @@ function renderizarBatalhaUI() {
         btnBasico.className = 'upgrade-btn';
         let danoBasico = Math.floor((1 + danoBaseEquip) * multiplicadorPrestige);
         btnBasico.innerHTML = `<span style="font-size: 0.6rem;">Ataque Básico</span><br><span style="font-size: 0.5rem; color: #ff5555;">Dano: ${danoBasico}</span>`;
-        btnBasico.onclick = () => turnoAtaqueMago(danoBasico, "Ataque Básico");
+        btnBasico.onclick = () => turnoAtaqueMago(danoBasico, "Ataque Básico", 'fisico');
         if (!turnoJogador) btnBasico.disabled = true;
         container.appendChild(btnBasico);
     }
 }
 
-function turnoAtaqueMago(dano, nomePoder) {
+let projeteisAtaque = []; // Array para guardar as animações de ataque
+
+function turnoAtaqueMago(dano, nomePoder, elementoPoder) {
     if (!monstroAtual || !turnoJogador || animacaoMagoMovendo) return;
 
     turnoJogador = false;
-    monstroAtual.hp -= dano;
     animacaoMagoAtacando = 10;
-
     playSound('click');
+
+    // Iniciar animação do projetil/ataque, que lidará com o dano e a vez do monstro depois.
+    const startX = xMagoAventura + 16;
+    const startY = canvas.height / 2;
+    const endX = xMonstro;
+    const endY = canvas.height / 2;
+
+    criarAnimacaoAtaque(elementoPoder, startX, startY, endX, endY, dano, nomePoder);
+}
+
+function aplicarDanoMonstro(dano, nomePoder) {
+    if (!monstroAtual) return;
+
+    monstroAtual.hp -= dano;
+
     logBatalha(`Você usou <b>${nomePoder}</b> e causou <b>${dano}</b> de dano!`);
 
     particulasDano.push({
@@ -469,11 +484,44 @@ function turnoAtaqueMago(dano, nomePoder) {
     renderizarBatalhaUI();
 
     if (monstroAtual.hp <= 0) {
-        setTimeout(monstroDerrotado, 1000);
+        setTimeout(monstroDerrotado, 500);
     } else {
-        // Turno do monstro após 1 segundo
-        setTimeout(turnoAtaqueMonstro, 1000);
+        // Turno do monstro
+        setTimeout(turnoAtaqueMonstro, 500);
     }
+}
+
+function criarAnimacaoAtaque(elemento, xStart, yStart, xEnd, yEnd, dano, nomePoder) {
+    let tipoAnimacao = 'projetil';
+    let corPrincipal = '#fff';
+
+    if (elemento === 'fogo') corPrincipal = '#ff5500';
+    else if (elemento === 'agua') corPrincipal = '#00aaff';
+    else if (elemento === 'ar') corPrincipal = '#aaffff';
+    else if (elemento === 'eletricidade') corPrincipal = '#ffff00';
+    else if (elemento === 'terra') corPrincipal = '#8b4513';
+    else if (elemento === 'luz') corPrincipal = '#ffffff';
+    else if (elemento === 'fisico') corPrincipal = '#aaaaaa';
+
+    if (elemento === 'eletricidade') {
+        tipoAnimacao = 'raio';
+    } else if (elemento === 'ar') {
+        tipoAnimacao = 'vento';
+    }
+
+    projeteisAtaque.push({
+        x: xStart,
+        y: yStart,
+        targetX: xEnd,
+        targetY: yEnd,
+        elemento: elemento,
+        cor: corPrincipal,
+        tipo: tipoAnimacao,
+        progresso: 0,
+        dano: dano,
+        nomePoder: nomePoder,
+        rastro: [] // para guardar rastro de fogo/água
+    });
 }
 
 function turnoAtaqueMonstro() {
@@ -1045,6 +1093,103 @@ function desenharAventura(deltaTime) {
         ctx.textAlign = 'center';
         ctx.fillText(monstroAtual.nome, xMonstro, canvas.height / 2 - 50);
     }
+
+    // Animações de Projéteis / Poderes
+    projeteisAtaque = projeteisAtaque.filter(proj => {
+        // Atualiza posição / progresso
+        proj.progresso += deltaTime * 0.003; // Velocidade da animação (0 a 1)
+
+        if (proj.progresso >= 1) {
+            // Atingiu o alvo!
+            aplicarDanoMonstro(proj.dano, proj.nomePoder);
+            // Efeito visual de impacto
+            criarParticulas(20, proj.targetX, proj.targetY, true);
+            return false; // Remove da lista
+        }
+
+        const atualX = proj.x + (proj.targetX - proj.x) * proj.progresso;
+        const atualY = proj.y + (proj.targetY - proj.y) * proj.progresso;
+
+        ctx.save();
+
+        if (proj.tipo === 'projetil') {
+            // Bola de Fogo / Água / Terra / etc
+            ctx.fillStyle = proj.cor;
+            ctx.beginPath();
+            ctx.arc(atualX, atualY, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Brilho
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = proj.cor;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(atualX, atualY, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Adiciona rastro
+            if (Math.random() > 0.3) {
+                proj.rastro.push({x: atualX, y: atualY, vida: 10});
+            }
+
+        } else if (proj.tipo === 'raio') {
+            // Eletricidade - desenha raio do mago até o monstro (ou parcial)
+            ctx.strokeStyle = proj.cor;
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = proj.cor;
+            ctx.beginPath();
+            ctx.moveTo(proj.x, proj.y);
+
+            let segments = 5;
+            let pX = proj.x;
+            let pY = proj.y;
+            let destX = proj.x + (proj.targetX - proj.x) * proj.progresso;
+            let destY = proj.y + (proj.targetY - proj.y) * proj.progresso;
+
+            for(let i=1; i<=segments; i++) {
+                let segX = proj.x + ((destX - proj.x) / segments) * i;
+                let segY = proj.y + ((destY - proj.y) / segments) * i;
+
+                // Random offset for zigzag
+                if(i < segments) {
+                    segX += (Math.random() - 0.5) * 20;
+                    segY += (Math.random() - 0.5) * 20;
+                }
+                ctx.lineTo(segX, segY);
+            }
+            ctx.stroke();
+
+        } else if (proj.tipo === 'vento') {
+            // Vento - cortes/crescents
+            ctx.strokeStyle = proj.cor;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(atualX, atualY, 15, -Math.PI/2, Math.PI/2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(atualX - 5, atualY, 10, -Math.PI/2, Math.PI/2);
+            ctx.stroke();
+        }
+
+        ctx.restore();
+
+        // Desenha rastro
+        if (proj.rastro) {
+            proj.rastro = proj.rastro.filter(r => {
+                r.vida--;
+                ctx.fillStyle = proj.cor;
+                ctx.globalAlpha = r.vida / 10;
+                ctx.beginPath();
+                ctx.arc(r.x, r.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+                return r.vida > 0;
+            });
+        }
+
+        return true;
+    });
 
     // Partículas de dano
     particulasDano = particulasDano.filter(p => {
