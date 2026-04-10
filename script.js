@@ -91,20 +91,53 @@ let equipamentosEquipados = {
 
 // Poderes
 const poderesDB = {
-    'bola_fogo': { id: 'bola_fogo', nome: 'Bola de Fogo', tipo: 'poder', raridade: 'comum', elemento: 'fogo', stats: { dano: 5 } },
-    'rajada_agua': { id: 'rajada_agua', nome: 'Rajada de Água', tipo: 'poder', raridade: 'comum', elemento: 'agua', stats: { dano: 5 } },
-    'sopro_vento': { id: 'sopro_vento', nome: 'Sopro de Vento', tipo: 'poder', raridade: 'comum', elemento: 'ar', stats: { dano: 5 } },
-    'choque': { id: 'choque', nome: 'Choque', tipo: 'poder', raridade: 'comum', elemento: 'eletricidade', stats: { dano: 5 } },
-    'pedrada': { id: 'pedrada', nome: 'Pedrada', tipo: 'poder', raridade: 'comum', elemento: 'terra', stats: { dano: 5 } },
-    'raio_luz': { id: 'raio_luz', nome: 'Raio de Luz', tipo: 'poder', raridade: 'comum', elemento: 'luz', stats: { dano: 5 } },
+    // FOGO
+    'fogo_comum': { id: 'fogo_comum', nome: 'Bola de Fogo', tipo: 'poder', raridade: 'comum', elemento: 'fogo', stats: { dano: 5 } },
+    'fogo_incomum': { id: 'fogo_incomum', nome: 'Explosão Solar', tipo: 'poder', raridade: 'incomum', elemento: 'fogo', stats: { dano: 15 } },
+    'fogo_raro': { id: 'fogo_raro', nome: 'Tempestade Ígnea', tipo: 'poder', raridade: 'raro', elemento: 'fogo', stats: { dano: 40 } },
+    'fogo_epico': { id: 'fogo_epico', nome: 'Inferno', tipo: 'poder', raridade: 'epico', elemento: 'fogo', stats: { dano: 100 } },
+    'fogo_lendario': { id: 'fogo_lendario', nome: 'Chuva de Meteoros', tipo: 'poder', raridade: 'lendario', elemento: 'fogo', stats: { dano: 250 } },
+    'fogo_mitico': { id: 'fogo_mitico', nome: 'Supernova', tipo: 'poder', raridade: 'mitico', elemento: 'fogo', stats: { dano: 600 } },
 
-    // Nível 5+ poderes
-    'explosao_solar': { id: 'explosao_solar', nome: 'Explosão Solar', tipo: 'poder', raridade: 'incomum', elemento: 'fogo', stats: { dano: 15 } },
-    'tsunami': { id: 'tsunami', nome: 'Tsunami', tipo: 'poder', raridade: 'incomum', elemento: 'agua', stats: { dano: 15 } },
+    // AGUA
+    'agua_comum': { id: 'agua_comum', nome: 'Rajada de Água', tipo: 'poder', raridade: 'comum', elemento: 'agua', stats: { dano: 5 } },
+    'agua_incomum': { id: 'agua_incomum', nome: 'Tsunami', tipo: 'poder', raridade: 'incomum', elemento: 'agua', stats: { dano: 15 } },
+    'agua_raro': { id: 'agua_raro', nome: 'Gêiser Mágico', tipo: 'poder', raridade: 'raro', elemento: 'agua', stats: { dano: 40 } },
+    'agua_epico': { id: 'agua_epico', nome: 'Maremoto', tipo: 'poder', raridade: 'epico', elemento: 'agua', stats: { dano: 100 } },
+    'agua_lendario': { id: 'agua_lendario', nome: 'Fúria dos Oceanos', tipo: 'poder', raridade: 'lendario', elemento: 'agua', stats: { dano: 250 } },
+    'agua_mitico': { id: 'agua_mitico', nome: 'Dilúvio Ancestral', tipo: 'poder', raridade: 'mitico', elemento: 'agua', stats: { dano: 600 } },
 
-    // Poderes de lootbox
-    'chuva_meteoros': { id: 'chuva_meteoros', nome: 'Chuva de Meteoros', tipo: 'poder', raridade: 'lendario', elemento: 'fogo', stats: { dano: 100 } },
-    'julgamento_divino': { id: 'julgamento_divino', nome: 'Julgamento Divino', tipo: 'poder', raridade: 'mitico', elemento: 'luz', stats: { dano: 500 } }
+    // AR
+    'ar_comum': { id: 'ar_comum', nome: 'Sopro de Vento', tipo: 'poder', raridade: 'comum', elemento: 'ar', stats: { dano: 5 } },
+    'ar_incomum': { id: 'ar_incomum', nome: 'Lâmina de Vento', tipo: 'poder', raridade: 'incomum', elemento: 'ar', stats: { dano: 15 } },
+    'ar_raro': { id: 'ar_raro', nome: 'Tornado', tipo: 'poder', raridade: 'raro', elemento: 'ar', stats: { dano: 40 } },
+    'ar_epico': { id: 'ar_epico', nome: 'Furacão', tipo: 'poder', raridade: 'epico', elemento: 'ar', stats: { dano: 100 } },
+    'ar_lendario': { id: 'ar_lendario', nome: 'Ciclone Divino', tipo: 'poder', raridade: 'lendario', elemento: 'ar', stats: { dano: 250 } },
+    'ar_mitico': { id: 'ar_mitico', nome: 'Ira dos Céus', tipo: 'poder', raridade: 'mitico', elemento: 'ar', stats: { dano: 600 } },
+
+    // ELETRICIDADE
+    'eletricidade_comum': { id: 'eletricidade_comum', nome: 'Choque', tipo: 'poder', raridade: 'comum', elemento: 'eletricidade', stats: { dano: 5 } },
+    'eletricidade_incomum': { id: 'eletricidade_incomum', nome: 'Raio', tipo: 'poder', raridade: 'incomum', elemento: 'eletricidade', stats: { dano: 15 } },
+    'eletricidade_raro': { id: 'eletricidade_raro', nome: 'Relâmpago', tipo: 'poder', raridade: 'raro', elemento: 'eletricidade', stats: { dano: 40 } },
+    'eletricidade_epico': { id: 'eletricidade_epico', nome: 'Tempestade Elétrica', tipo: 'poder', raridade: 'epico', elemento: 'eletricidade', stats: { dano: 100 } },
+    'eletricidade_lendario': { id: 'eletricidade_lendario', nome: 'Trovão Ancestral', tipo: 'poder', raridade: 'lendario', elemento: 'eletricidade', stats: { dano: 250 } },
+    'eletricidade_mitico': { id: 'eletricidade_mitico', nome: 'Cólera de Zeus', tipo: 'poder', raridade: 'mitico', elemento: 'eletricidade', stats: { dano: 600 } },
+
+    // TERRA
+    'terra_comum': { id: 'terra_comum', nome: 'Pedrada', tipo: 'poder', raridade: 'comum', elemento: 'terra', stats: { dano: 5 } },
+    'terra_incomum': { id: 'terra_incomum', nome: 'Terremoto', tipo: 'poder', raridade: 'incomum', elemento: 'terra', stats: { dano: 15 } },
+    'terra_raro': { id: 'terra_raro', nome: 'Deslizamento', tipo: 'poder', raridade: 'raro', elemento: 'terra', stats: { dano: 40 } },
+    'terra_epico': { id: 'terra_epico', nome: 'Esmagamento', tipo: 'poder', raridade: 'epico', elemento: 'terra', stats: { dano: 100 } },
+    'terra_lendario': { id: 'terra_lendario', nome: 'Meteoro Terrestre', tipo: 'poder', raridade: 'lendario', elemento: 'terra', stats: { dano: 250 } },
+    'terra_mitico': { id: 'terra_mitico', nome: 'Ira de Gaia', tipo: 'poder', raridade: 'mitico', elemento: 'terra', stats: { dano: 600 } },
+
+    // LUZ
+    'luz_comum': { id: 'luz_comum', nome: 'Raio de Luz', tipo: 'poder', raridade: 'comum', elemento: 'luz', stats: { dano: 5 } },
+    'luz_incomum': { id: 'luz_incomum', nome: 'Clarão', tipo: 'poder', raridade: 'incomum', elemento: 'luz', stats: { dano: 15 } },
+    'luz_raro': { id: 'luz_raro', nome: 'Feixe Purificador', tipo: 'poder', raridade: 'raro', elemento: 'luz', stats: { dano: 40 } },
+    'luz_epico': { id: 'luz_epico', nome: 'Aura Sagrada', tipo: 'poder', raridade: 'epico', elemento: 'luz', stats: { dano: 100 } },
+    'luz_lendario': { id: 'luz_lendario', nome: 'Castigo Celestial', tipo: 'poder', raridade: 'lendario', elemento: 'luz', stats: { dano: 250 } },
+    'luz_mitico': { id: 'luz_mitico', nome: 'Julgamento Divino', tipo: 'poder', raridade: 'mitico', elemento: 'luz', stats: { dano: 600 } }
 };
 
 let poderesInventario = []; // IDs de poderes que o jogador possui
@@ -2440,12 +2473,113 @@ function renderizarInventario() {
         sep.innerHTML = '<span style="font-size:0.6rem; color:#aaa;">Poderes:</span>';
         mochilaContainer.appendChild(sep);
 
+        let poderesAgrupados = {};
         poderesMochila.forEach(pid => {
+            poderesAgrupados[pid] = (poderesAgrupados[pid] || 0) + 1;
+        });
+
+        Object.keys(poderesAgrupados).forEach(pid => {
+            const qtde = poderesAgrupados[pid];
             const card = criarCardPoder(pid, false);
-            if (card) mochilaContainer.appendChild(card);
+            const templatePoder = poderesDB[pid];
+            if (card && templatePoder) {
+                if (qtde > 1) {
+                    const badge = document.createElement('div');
+                    badge.style = 'position: absolute; top: -5px; right: -5px; background: red; color: white; border-radius: 50%; width: 15px; height: 15px; font-size: 8px; line-height: 15px; text-align: center; border: 1px solid white; z-index: 10; pointer-events: none;';
+                    badge.innerText = qtde;
+                    card.style.position = 'relative';
+                    card.appendChild(badge);
+                }
+
+                if (qtde >= 3 && obterProximaRaridade(templatePoder.raridade)) {
+                    const btnFundir = document.createElement('button');
+                    btnFundir.innerText = 'Fundir (3)';
+                    btnFundir.style = 'margin-top: 5px; background: #00ff00; color: #000; font-size: 0.5rem; padding: 2px; width: 100%; border: none; cursor: pointer; border-radius: 2px; position: relative; z-index: 20;';
+                    btnFundir.onclick = (e) => {
+                        e.stopPropagation();
+                        fundirPoder(pid);
+                    };
+                    card.appendChild(btnFundir);
+                }
+                mochilaContainer.appendChild(card);
+            }
         });
     }
 }
+
+
+// --- SISTEMA DE FUSÃO ---
+function obterProximaRaridade(atual) {
+    const ordem = ['comum', 'incomum', 'raro', 'epico', 'lendario', 'mitico'];
+    const idx = ordem.indexOf(atual);
+    if (idx !== -1 && idx < ordem.length - 1) {
+        return ordem[idx + 1];
+    }
+    return null;
+}
+
+function fundirPoder(poderId) {
+    const template = poderesDB[poderId];
+    if (!template) return;
+
+    // Contar quantos o jogador tem no inventário (não equipados)
+    // Contar apenas os que estão desequipados
+    let tempEquipados = [...poderesEquipados].filter(p => p !== null);
+    let poderesMochila = [];
+
+    poderesInventario.forEach(pid => {
+        const indexEquipado = tempEquipados.indexOf(pid);
+        if (indexEquipado !== -1) {
+            tempEquipados.splice(indexEquipado, 1);
+        } else {
+            poderesMochila.push(pid);
+        }
+    });
+
+    let contagemInventario = 0;
+    poderesMochila.forEach(id => {
+        if (id === poderId) contagemInventario++;
+    });
+
+    if (contagemInventario >= 3) {
+        const proximaRaridade = obterProximaRaridade(template.raridade);
+        if (!proximaRaridade) {
+            alert("Este poder já está no nível máximo!");
+            return;
+        }
+
+        const proximoId = template.elemento + '_' + proximaRaridade;
+        const proximoPoder = poderesDB[proximoId];
+
+        if (proximoPoder) {
+            // Remove 3 do inventário
+            let removidos = 0;
+            poderesInventario = poderesInventario.filter(id => {
+                if (id === poderId && removidos < 3) {
+                    removidos++;
+                    return false;
+                }
+                return true;
+            });
+
+            // Adiciona o novo
+            poderesInventario.push(proximoId);
+            playSound('click'); // ou som de sucesso
+            renderizarInventario();
+            salvarJogo();
+            logBatalha(`Você fundiu 3 <span style="color:${coresElemento[template.elemento]}">${template.nome}</span> e criou um ${proximoPoder.nome}!`);
+
+            // Mostra notificação visual em vez de alert
+            const uiBatalha = document.getElementById('batalha-ui');
+            if (uiBatalha && uiBatalha.classList.contains('hidden')) {
+                criarFloatingText("Fusão: " + proximoPoder.nome, canvas.width/2, canvas.height/2);
+            }
+        }
+    } else {
+        alert("Você precisa de 3 poderes idênticos (não equipados) para fundir.");
+    }
+}
+// ------------------------
 
 function equiparMelhoresPoderes() {
     // Pegar todos os poderes disponíveis (inventário + equipados)
