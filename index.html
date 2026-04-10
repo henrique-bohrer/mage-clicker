@@ -65,13 +65,13 @@
                     <canvas id="gameCanvas" width="400" height="400"></canvas>
                 </div>
 
-                <aside class="sidebar">
-                    <div class="tabs">
-                        <button class="tab-btn active" data-target="loja">Loja</button>
-                        <button class="tab-btn" data-target="quests">Quests</button>
-                        <button class="tab-btn" data-target="caixas">Caixas</button>
-                        <button class="tab-btn" data-target="inventario">Inv.</button>
-                        <button class="tab-btn" data-target="aventuras">Aventuras</button>
+                <aside class="sidebar" style="background: transparent; border: none;">
+                    <div class="icon-menu">
+                        <button class="icon-btn" data-target="loja" title="Loja">🏪</button>
+                        <button class="icon-btn" data-target="quests" title="Quests">📜</button>
+                        <button class="icon-btn" data-target="caixas" title="Caixas">📦</button>
+                        <button class="icon-btn" data-target="inventario" title="Inventário">🎒</button>
+                        <button class="icon-btn" data-target="aventuras" title="Aventuras">🗺️</button>
                     </div>
 
                     <div id="loja-tab" class="tab-content active">
@@ -134,7 +134,16 @@
                             <button id="btn-leave-adventure" style="margin-top: 20px; width: 100%; padding: 10px; background: #555; color: white;" onclick="sairAventura()">Fugir da Batalha</button>
                         </div>
                     </div>
-                </aside>
+
+                <!-- Modais -->
+                <div id="modal-overlay" class="hidden">
+                    <div id="modal-content-box">
+                        <button id="close-modal-btn">X</button>
+                        <h2 id="modal-title">Título</h2>
+                        <div id="modal-body"></div>
+                    </div>
+                </div>
+</aside>
             </main>
         </div>
     </div>

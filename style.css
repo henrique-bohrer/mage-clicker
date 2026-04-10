@@ -262,17 +262,9 @@ canvas {
     color: var(--element-color);
 }
 
-.tab-content {
-    display: none;
-    flex-direction: column;
-    padding: 15px;
-    overflow-y: auto;
-    flex: 1;
-}
+.tab-content { display: none; }
 
-.tab-content.active {
-    display: flex;
-}
+
 
 /* Scrollbar specific to sidebar contents */
 .tab-content::-webkit-scrollbar {
@@ -487,4 +479,85 @@ canvas {
     .stats p {
         font-size: 9px;
     }
+}
+
+/* Icon Menu */
+.icon-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.icon-btn {
+    font-size: 2rem;
+    background: #222;
+    border: 2px solid #555;
+    border-radius: 10px;
+    width: 60px;
+    height: 60px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-btn:hover {
+    transform: scale(1.1);
+    background: #333;
+    box-shadow: 0 0 10px var(--element-color, #fff);
+    border-color: var(--element-color, #fff);
+}
+
+/* Modals */
+#modal-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+}
+#modal-overlay.hidden {
+    display: none;
+}
+#modal-content-box {
+    background: #111;
+    border: 4px solid var(--element-color, #fff);
+    width: 80%;
+    max-width: 600px;
+    height: 80%;
+    max-height: 600px;
+    border-radius: 8px;
+    padding: 20px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 20px #000;
+}
+#close-modal-btn {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: #a00;
+    color: white;
+    border: 2px solid #f00;
+    font-family: 'Press Start 2P', cursive;
+    cursor: pointer;
+    padding: 5px;
+}
+#modal-title {
+    text-align: center;
+    color: var(--element-color, #fff);
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+    text-transform: uppercase;
+}
+#modal-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 10px;
 }

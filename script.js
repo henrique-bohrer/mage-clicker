@@ -141,6 +141,7 @@ const poderesDB = {
 };
 
 let poderesInventario = []; // IDs de poderes que o jogador possui
+let poderesTemporarios = []; // IDs de poderes obtidos apenas na aventura atual
 let poderesEquipados = [null, null, null, null]; // IDs dos 4 poderes equipados
 
 // Caixas e Loots
@@ -289,18 +290,48 @@ window.onload = () => {
 };
 
 function configurarTabs() {
-    const tabs = document.querySelectorAll('.tab-btn');
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            // Remover active de todos
-            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    const icons = document.querySelectorAll('.icon-btn');
+    const modalOverlay = document.getElementById('modal-overlay');
+    const modalBody = document.getElementById('modal-body');
+    const modalTitle = document.getElementById('modal-title');
+    const closeBtn = document.getElementById('close-modal-btn');
 
-            // Adicionar active no clicado
-            tab.classList.add('active');
-            const targetId = tab.getAttribute('data-target') + '-tab';
-            document.getElementById(targetId).classList.add('active');
+    // Nomes mapeados
+    const titles = {
+        'loja': 'Loja de Magia',
+        'quests': 'Quests e Missões',
+        'caixas': 'Caixas Elementais',
+        'inventario': 'Inventário e Poderes',
+        'aventuras': 'Mapa de Aventuras'
+    };
+
+    icons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-target') + '-tab';
+            const contentDiv = document.getElementById(targetId);
+
+            if (contentDiv) {
+                // Esconde todos
+                document.querySelectorAll('.tab-content').forEach(c => {
+                    c.style.display = 'none';
+                    // Devolve pro sidebar caso estivessem no modal
+                    document.querySelector('.sidebar').appendChild(c);
+                });
+
+                // Mostra o alvo dentro do modal
+                contentDiv.style.display = 'block';
+                modalBody.appendChild(contentDiv);
+
+                modalTitle.innerText = titles[btn.getAttribute('data-target')];
+                modalOverlay.classList.remove('hidden');
+                playSound('click');
+            }
         });
+    });
+
+    closeBtn.addEventListener('click', () => {
+        modalOverlay.classList.add('hidden');
+        playSound('click');
     });
 }
 
@@ -965,6 +996,30 @@ function desenharMago(x, y) {
     const floatY = Math.sin(lastTime * 0.002) * 5;
     ctx.translate(0, floatY);
 
+    // Desenhar Aura baseada na raridade mais alta equipada
+    const hatEq = equipamentosDB[equipamentosEquipados.hat];
+    const robeEq = equipamentosDB[equipamentosEquipados.robe];
+    const staffEq = equipamentosDB[equipamentosEquipados.staff];
+
+    let auraRank = 0;
+    let auraColor = 'transparent';
+    const rarityToRank = { 'comum': 1, 'incomum': 2, 'raro': 3, 'epico': 4, 'lendario': 5, 'mitico': 6 };
+
+    if (hatEq) { let r = rarityToRank[hatEq.raridade]; if (r > auraRank) { auraRank = r; auraColor = raridades[hatEq.raridade].cor; } }
+    if (robeEq) { let r = rarityToRank[robeEq.raridade]; if (r > auraRank) { auraRank = r; auraColor = raridades[robeEq.raridade].cor; } }
+    if (staffEq) { let r = rarityToRank[staffEq.raridade]; if (r > auraRank) { auraRank = r; auraColor = raridades[staffEq.raridade].cor; } }
+
+    if (auraRank >= 4) { // Epic or above gets aura
+        const auraPulse = Math.sin(lastTime * 0.005) * (auraRank * 2);
+        const grad = ctx.createRadialGradient(0, 0, 10, 0, 0, 80 + auraPulse);
+        grad.addColorStop(0, auraColor + '66'); // 40% opacity
+        grad.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad;
+        // Centralizar
+        ctx.fillRect(-100, -100, 200, 200);
+    }
+
+
     ctx.scale(magoScale, magoScale);
 
     // Desenhar o mago baseado na referência em 32x32 pixel art scale
@@ -988,16 +1043,15 @@ function desenharMago(x, y) {
     const robeEq = equipamentosDB[equipamentosEquipados.robe];
     const staffEq = equipamentosDB[equipamentosEquipados.staff];
 
-    // Primary color should always be the element color
-    const HC = C; // Hat color
-    const RC = C; // Robe color
+    // Cores baseadas na raridade dos equipamentos (substitui a cor do elemento se equipado)
+    let HC = hatEq && hatEq.id !== 'chapeu_aprendiz' ? raridades[hatEq.raridade].cor : C;
+    let RC = robeEq && robeEq.id !== 'roupa_basica' ? raridades[robeEq.raridade].cor : C;
 
-    const HC_D = D;
-    const RC_D = D;
+    let HC_D = ajustarCor(HC, 0.6);
+    let RC_D = ajustarCor(RC, 0.6);
 
-    // Highlight colors come from the equipment's rarity/definition
-    const HH = hatEq ? raridades[hatEq.raridade].cor : L;
-    const RH = robeEq ? raridades[robeEq.raridade].cor : L;
+    const HH = L; // Brilho pode manter elemento ou ser branco
+    const RH = L;
     const SH = staffEq ? raridades[staffEq.raridade].cor : L;
     const SC = '#3e2723'; // Base de madeira escura para o cajado
     const SC_D = '#1e110c';
@@ -1460,6 +1514,7 @@ function renderizarAventuras() {
 function entrarAventura(id) {
     aventuraAtual = dungeons.find(d => d.id === id);
     modoAventura = true;
+    poderesTemporarios = []; // Reset temporary powers on entry
     xMagoAventura = 100;
     salaAtual = 1;
     salaTipo = 'monstro';
@@ -1486,6 +1541,25 @@ function entrarAventura(id) {
 }
 
 function sairAventura() {
+    // Remove os poderes temporários obtidos nesta sessão
+    if (poderesTemporarios.length > 0) {
+        poderesTemporarios.forEach(tempId => {
+            // Remove da mochila
+            const idx = poderesInventario.indexOf(tempId);
+            if (idx !== -1) poderesInventario.splice(idx, 1);
+
+            // Remove dos equipados se estiver lá
+            const eqIdx = poderesEquipados.indexOf(tempId);
+            if (eqIdx !== -1) poderesEquipados[eqIdx] = null;
+        });
+
+        // Notifica o jogador (se estiver no HTML, podemos usar alert, mas melhor silent se for fuga)
+        if (hpMagoBatalha <= 0) {
+            alert("Aventura falhou! Os poderes temporários encontrados nesta masmorra foram perdidos.");
+        }
+    }
+
+    poderesTemporarios = [];
     modoAventura = false;
     aventuraAtual = null;
     monstroAtual = null;
@@ -1624,7 +1698,8 @@ function escolherEvento(index) {
         logBatalha(`Você sente a magia fluindo! Tiros duplos ativados.`);
     } else if (escolhido.tipo === 'poder') {
         poderesInventario.push(escolhido.id);
-        logBatalha(`Você obteve o poder: ${escolhido.nome}!`);
+        poderesTemporarios.push(escolhido.id); // Track as temporary
+        logBatalha(`Você obteve o poder temporário: ${escolhido.nome}!`);
     } else if (escolhido.tipo === 'mana') {
         mana += aventuraAtual.recompensaMana * 5;
         logBatalha(`Você encontrou um cristal e ganhou bastante mana!`);
@@ -2371,15 +2446,19 @@ function renderizarInventario() {
         const poder = poderesDB[poderId];
         if (!poder) return null;
 
+        const isTemp = poderesTemporarios.includes(poderId);
+
         const card = document.createElement('div');
         card.className = `inv-item rarity-${poder.raridade} ${isEquipped ? 'equipped' : ''}`;
+        if (isTemp) card.style.border = '2px dashed #ff00ff'; // Destaque visual
+
 
         let statsStr = '';
         const mult = raridades[poder.raridade] ? raridades[poder.raridade].multi : 1;
         if (poder.stats.dano) statsStr += `Dano:${poder.stats.dano * mult} `;
 
         card.innerHTML = `
-            <div class="item-name" style="color: ${raridades[poder.raridade] ? raridades[poder.raridade].cor : '#fff'}">${poder.nome}</div>
+            <div class="item-name" style="color: ${raridades[poder.raridade] ? raridades[poder.raridade].cor : '#fff'}">${poder.nome} ${isTemp ? '<span style="color:#f0f; font-size:6px;">[TEMP]</span>' : ''}</div>
             <div style="font-size: 0.4rem; color: #888;">Elm: ${poder.elemento}<br>${statsStr}</div>
         `;
 
