@@ -1049,6 +1049,79 @@ function desenharMago(x, y) {
     ctx.restore();
 }
 
+// Template para os inimigos/fantasmas (24x24 pixel art)
+// 0: Transparente, 1: Olhos/Boca escuro, 2: Sombra Escura, 3: Sombra Clara, 4: Corpo (Cor dinâmica)
+const ghostSpriteTemplate = [
+    [0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,1,1,4,4,4,4,1,1,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,1,4,4,4,4,4,4,4,4,1,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,1,4,4,4,4,4,4,4,4,4,4,1,0,0,0,0,0,0],
+    [0,0,0,0,0,0,1,4,4,4,4,4,4,4,4,4,4,1,0,0,0,0,0,0],
+    [0,0,0,0,0,1,4,4,4,4,4,4,4,4,4,4,4,4,1,0,0,0,0,0],
+    [0,0,0,0,0,1,4,4,4,4,4,4,4,4,4,4,4,4,1,0,0,0,0,0],
+    [0,0,0,0,1,4,4,4,4,4,4,4,4,4,4,4,4,4,4,1,0,0,0,0],
+    [0,0,0,0,1,4,4,4,4,4,1,1,4,4,1,1,4,4,4,1,0,0,0,0],
+    [0,0,0,0,1,4,4,4,4,4,1,1,4,4,1,1,4,4,4,1,0,0,0,0],
+    [0,0,0,0,1,4,4,4,4,3,1,1,4,4,1,1,3,4,4,1,0,0,0,0],
+    [0,0,0,0,1,4,4,4,4,3,4,4,4,4,4,4,3,4,4,1,0,0,0,0],
+    [0,0,0,0,1,3,4,4,4,3,4,4,4,4,4,4,3,4,3,1,0,0,0,0],
+    [0,0,0,0,1,3,3,4,4,3,4,4,4,4,4,4,3,4,3,1,0,0,0,0],
+    [0,0,0,0,1,3,3,4,4,3,4,4,4,4,4,4,3,4,3,1,0,0,0,0],
+    [0,0,0,0,1,3,3,4,4,3,4,4,2,4,4,4,3,4,3,1,0,0,0,0],
+    [0,0,0,0,1,3,3,4,4,3,4,2,1,2,4,4,3,4,3,1,0,0,0,0],
+    [0,0,0,0,1,3,3,4,3,3,4,1,1,1,4,4,3,4,3,1,0,0,0,0],
+    [0,0,0,0,1,3,3,3,3,2,1,1,1,1,1,2,3,3,3,1,0,0,0,0],
+    [0,0,0,0,1,3,3,2,2,1,1,0,0,1,1,2,2,3,3,1,0,0,0,0],
+    [0,0,0,0,0,1,1,1,1,1,0,0,0,0,1,1,1,1,1,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+];
+
+function desenharMonstroSprite(centerX, centerY, size, baseColor) {
+    const ps = size / 24; // Pixel size for the 24x24 matrix
+    const startX = centerX - (size / 2);
+    const startY = centerY - (size / 2);
+
+    // Parse the HSL string (hsl(H, S%, L%)) into something we can manipulate
+    // Or just use the baseColor for the body, and derived colors for shades.
+    // For simplicity, we'll use baseColor for body.
+
+    // Create dark and light variants of baseColor (rough approximation via globalAlpha/black)
+
+    for (let y = 0; y < 24; y++) {
+        for (let x = 0; x < 24; x++) {
+            const val = ghostSpriteTemplate[y][x];
+            if (val === 0) continue;
+
+            let color = '';
+            if (val === 1) {
+                color = '#151525';
+            } else if (val === 2) {
+                color = '#1a1a2b';
+                // Blend base color with dark shade
+                ctx.fillStyle = baseColor;
+                ctx.fillRect(startX + x * ps, startY + y * ps, ps, ps);
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillRect(startX + x * ps, startY + y * ps, ps, ps);
+                continue;
+            } else if (val === 3) {
+                color = '#99a3bd';
+                ctx.fillStyle = baseColor;
+                ctx.fillRect(startX + x * ps, startY + y * ps, ps, ps);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.fillRect(startX + x * ps, startY + y * ps, ps, ps);
+                continue;
+            } else if (val === 4) {
+                color = baseColor;
+            }
+
+            ctx.fillStyle = color;
+            ctx.fillRect(startX + x * ps, startY + y * ps, ps + 0.5, ps + 0.5); // +0.5 to prevent bleeding
+        }
+    }
+}
+
 // === Sistema de Aventuras ===
 
 function renderizarAventuras() {
@@ -1330,21 +1403,12 @@ function desenharAventura(deltaTime) {
     // Desenhar monstro, Boss ou Evento
     if ((salaTipo === 'monstro' || salaTipo === 'boss') && monstroAtual) {
         const isBoss = salaTipo === 'boss';
-        ctx.fillStyle = monstroAtual.cor;
 
         const baseSize = isBoss ? 80 : 40;
         const breath = Math.sin(lastTime * (isBoss ? 0.003 : 0.005)) * (isBoss ? 10 : 5);
         const sSize = baseSize + breath;
 
-        ctx.fillRect(xMonstro - sSize/2, canvas.height / 2 - sSize/2 + 20, sSize, sSize);
-
-        // Olhos
-        ctx.fillStyle = '#000';
-        const eyeOffset = isBoss ? 20 : 10;
-        const eyeSize = isBoss ? 10 : 5;
-        const eyeYOffset = isBoss ? 0 : 10;
-        ctx.fillRect(xMonstro - eyeOffset, canvas.height / 2 + eyeYOffset, eyeSize, eyeSize);
-        ctx.fillRect(xMonstro + eyeOffset - eyeSize/2, canvas.height / 2 + eyeYOffset, eyeSize, eyeSize);
+        desenharMonstroSprite(xMonstro, canvas.height / 2 + 20 + breath / 2, sSize, monstroAtual.cor);
 
         if (isBoss) {
             // Boss HP Bar (Grande, no topo central)
