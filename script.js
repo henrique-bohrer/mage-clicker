@@ -120,6 +120,17 @@ const upgrades = [
     { id: 'artefato', nome: 'Artefato Divino', desc: 'Poder Imensurável', custoBase: 1e9, multiCusto: 1.6, nivel: 0, efeito: () => { manaPorClique += 10000; manaPassiva += 50000; } }
 ];
 
+let estadoAnimacaoCaixa = {
+    ativa: false,
+    tempoAtual: 0,
+    tempoMax: 2500, // 2.5s para tremer
+    fase: 0, // 0 = tremendo, 1 = aberto
+    material: '',
+    itemSorteado: null,
+    raridadeGanha: '',
+    isPoder: false
+};
+
 // Audio Context Setup
 let audioCtx = null;
 
@@ -824,6 +835,11 @@ function gameLoop(timestamp) {
     atualizarLojaUI();
     atualizarQuests();
 
+    // Sobrepor a animação da caixa se estiver ativa
+    if (estadoAnimacaoCaixa.ativa) {
+        desenharAnimacaoCaixa(deltaTime);
+    }
+
     requestAnimationFrame(gameLoop);
 }
 
@@ -1243,6 +1259,9 @@ function monstroDerrotado() {
     if (aventuraAtual.dropCaixa && Math.random() < chanceDrop) {
         const caixaIdx = caixas.findIndex(c => c.id === aventuraAtual.dropCaixa);
         if (caixaIdx >= 0) {
+            // Força a ter diamantes temporariamente para a função abrir
+            const custoReal = caixas[caixaIdx].custo;
+            diamantes += custoReal;
             abrirCaixa(caixaIdx); // Simula abrir a caixa grátis
         }
     }
@@ -1650,6 +1669,8 @@ function renderizarCaixas() {
 }
 
 function abrirCaixa(index) {
+    if (estadoAnimacaoCaixa.ativa) return; // UI Lock prevent spamming
+
     const caixa = caixas[index];
     if (diamantes >= caixa.custo) {
         diamantes -= caixa.custo;
@@ -1674,7 +1695,7 @@ function abrirCaixa(index) {
         else if (rand <= chanceI) raridadeGanha = 'incomum';
 
         // Sorteio: 50% chance equipamento, 50% chance poder
-        const isPoder = Math.random() > 0.5;
+        let isPoder = Math.random() > 0.5;
         let dbSorteada = isPoder ? poderesDB : equipamentosDB;
         let arrAlvo = isPoder ? poderesInventario : inventario;
 
@@ -1682,6 +1703,7 @@ function abrirCaixa(index) {
         let itensPossiveis = Object.values(dbSorteada).filter(item => item.raridade === raridadeGanha);
         if (itensPossiveis.length === 0) {
             // Se tentou poder e não tem dessa raridade, tenta equipamento. Se não tiver tbm, cai pra comum
+            isPoder = false;
             dbSorteada = equipamentosDB;
             arrAlvo = inventario;
             itensPossiveis = Object.values(dbSorteada).filter(item => item.raridade === raridadeGanha);
@@ -1693,17 +1715,223 @@ function abrirCaixa(index) {
 
         const itemGanho = itensPossiveis[Math.floor(Math.random() * itensPossiveis.length)];
 
-        // Efeito visual
-        criarParticulas(50, canvas.width/2, canvas.height/2, true);
-
-        arrAlvo.push(itemGanho.id);
+        // Ativa a animação em vez de dar o item imediatamente
+        estadoAnimacaoCaixa = {
+            ativa: true,
+            tempoAtual: 0,
+            tempoMax: 2500,
+            fase: 0,
+            material: index === 0 ? 'madeira' : (index === 1 ? 'ferro' : 'magica'),
+            itemSorteado: itemGanho,
+            raridadeGanha: raridadeGanha,
+            isPoder: isPoder
+        };
 
         atualizarUI();
-        renderizarInventario();
-        alert(`Você abriu a ${caixa.nome} e ganhou: ${itemGanho.nome} (${raridadeGanha})!`);
     } else {
         alert('Diamantes insuficientes!');
     }
+}
+
+function finalizarAnimacaoCaixa() {
+    estadoAnimacaoCaixa.ativa = false;
+
+    // Adicionar item ao inventário
+    const isPoder = estadoAnimacaoCaixa.isPoder;
+    let arrAlvo = isPoder ? poderesInventario : inventario;
+    arrAlvo.push(estadoAnimacaoCaixa.itemSorteado.id);
+
+    atualizarUI();
+    renderizarInventario();
+}
+
+function desenharAnimacaoCaixa(deltaTime) {
+    if (!estadoAnimacaoCaixa.ativa) return;
+
+    estadoAnimacaoCaixa.tempoAtual += deltaTime;
+
+    // Draw Overlay Escuro
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+
+    const { fase, tempoAtual, tempoMax, material, itemSorteado, raridadeGanha } = estadoAnimacaoCaixa;
+
+    if (fase === 0) {
+        // Fase 0: Tremendo
+        if (tempoAtual >= tempoMax) {
+            estadoAnimacaoCaixa.fase = 1;
+            estadoAnimacaoCaixa.tempoAtual = 0;
+            playSound('upgrade'); // Som de revelação
+            criarParticulas(100, cx, cy, true);
+            return;
+        }
+
+        const progresso = tempoAtual / tempoMax; // 0 a 1
+        const intensidadeTremor = progresso * 10;
+
+        const offsetX = (Math.random() - 0.5) * intensidadeTremor;
+        const offsetY = (Math.random() - 0.5) * intensidadeTremor;
+
+        desenharCaixaSprite(cx + offsetX, cy + offsetY, material, false);
+
+        // Efeito de brilho crescendo
+        if (material === 'magica') {
+            ctx.globalAlpha = progresso * 0.5;
+            ctx.fillStyle = '#aa00ff';
+            ctx.beginPath();
+            ctx.arc(cx + offsetX, cy + offsetY, 50 + progresso * 20, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1.0;
+        }
+
+    } else if (fase === 1) {
+        // Fase 1: Revelação (Aberto)
+        // Permanece por 3 segundos
+        if (tempoAtual >= 3000) {
+            finalizarAnimacaoCaixa();
+            return;
+        }
+
+        desenharCaixaSprite(cx, cy + 30, material, true); // Caixa aberta embaixo
+
+        // Fundo do Item (Brilho rotativo)
+        ctx.save();
+        ctx.translate(cx, cy - 30);
+        ctx.rotate(tempoAtual * 0.002);
+        const corRaridade = raridades[raridadeGanha] ? raridades[raridadeGanha].cor : '#fff';
+
+        for (let i = 0; i < 8; i++) {
+            ctx.fillStyle = corRaridade;
+            ctx.globalAlpha = 0.3;
+            ctx.rotate(Math.PI / 4);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-10, -100);
+            ctx.lineTo(10, -100);
+            ctx.fill();
+        }
+        ctx.restore();
+
+        // Desenhar ícone do item flutuando
+        const floatY = Math.sin(tempoAtual * 0.005) * 5;
+
+        ctx.fillStyle = corRaridade;
+        ctx.textAlign = 'center';
+        ctx.font = '16px "Press Start 2P"';
+        ctx.fillText(raridadeGanha.toUpperCase(), cx, cy - 80);
+
+        ctx.font = '12px "Press Start 2P"';
+        ctx.fillStyle = '#fff';
+        ctx.fillText(itemSorteado.nome, cx, cy - 60);
+
+        // Sprite placeholder do item
+        desenharItemSprite(cx, cy - 30 + floatY, itemSorteado.tipo, corRaridade);
+    }
+}
+
+function desenharCaixaSprite(x, y, material, aberta) {
+    let corPrincipal, corDetalhe, corBorda;
+
+    if (material === 'madeira') {
+        corPrincipal = '#8b4513';
+        corDetalhe = '#a0522d';
+        corBorda = '#5c3317';
+    } else if (material === 'ferro') {
+        corPrincipal = '#888888';
+        corDetalhe = '#aaaaaa';
+        corBorda = '#555555';
+    } else if (material === 'magica') {
+        corPrincipal = '#4b0082'; // Indigo/Roxo
+        corDetalhe = '#8a2be2';
+        corBorda = '#2a0050';
+    }
+
+    const size = 60;
+
+    ctx.save();
+    ctx.translate(x - size/2, y - size/2);
+
+    // Corpo
+    ctx.fillStyle = corBorda;
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = corPrincipal;
+    ctx.fillRect(4, 4, size-8, size-8);
+
+    // Detalhes
+    ctx.fillStyle = corDetalhe;
+    ctx.fillRect(10, 10, size-20, size-20);
+
+    if (aberta) {
+        // Tampa aberta (deslocada pra trás/cima)
+        ctx.fillStyle = corBorda;
+        ctx.fillRect(0, -30, size, 30);
+        ctx.fillStyle = corPrincipal;
+        ctx.fillRect(4, -26, size-8, 26);
+        ctx.fillStyle = '#000'; // Interior escuro
+        ctx.fillRect(4, 4, size-8, size-8);
+    } else {
+        // Fechadura/Faixa
+        ctx.fillStyle = corBorda;
+        ctx.fillRect(0, size/2 - 5, size, 10); // Faixa
+        ctx.fillStyle = '#d4af37'; // Ouro
+        ctx.fillRect(size/2 - 8, size/2 - 8, 16, 16); // Fechadura base
+        ctx.fillStyle = '#000';
+        ctx.fillRect(size/2 - 2, size/2 - 2, 4, 6); // Buraco
+    }
+
+    if (material === 'magica' && !aberta) {
+        // Glow magico
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#aa00ff';
+        ctx.strokeStyle = '#aa00ff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(size/2 - 12, size/2 - 12, 24, 24);
+    }
+
+    ctx.restore();
+}
+
+function desenharItemSprite(x, y, tipo, cor) {
+    const size = 32;
+    ctx.save();
+    ctx.translate(x - size/2, y - size/2);
+
+    ctx.fillStyle = cor;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = cor;
+
+    if (tipo === 'hat') {
+        ctx.beginPath();
+        ctx.moveTo(16, 0);
+        ctx.lineTo(32, 24);
+        ctx.lineTo(0, 24);
+        ctx.fill();
+        ctx.fillRect(0, 24, 32, 8);
+    } else if (tipo === 'robe') {
+        ctx.fillRect(8, 0, 16, 8); // ombros
+        ctx.fillRect(4, 8, 24, 24); // corpo
+    } else if (tipo === 'staff') {
+        ctx.fillStyle = '#8b4513'; // cabo sempre marrom
+        ctx.fillRect(14, 8, 4, 24);
+        ctx.fillStyle = cor; // topo com a cor da raridade
+        ctx.beginPath();
+        ctx.arc(16, 8, 8, 0, Math.PI * 2);
+        ctx.fill();
+    } else if (tipo === 'poder') {
+        // Uma estrela / orbe
+        ctx.beginPath();
+        ctx.arc(16, 16, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(12, 12, 4, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    ctx.restore();
 }
 
 function renderizarInventario() {
