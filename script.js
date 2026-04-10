@@ -792,7 +792,8 @@ function atualizarFloatingTexts() {
 }
 
 function configurarEventosSelecao() {
-    const botoes = document.querySelectorAll('.element-btn');
+    // Apenas botões que têm o atributo data-element
+    const botoes = document.querySelectorAll('.element-btn[data-element]');
     botoes.forEach(btn => {
         btn.addEventListener('click', () => {
             elementoSelecionado = btn.getAttribute('data-element');
