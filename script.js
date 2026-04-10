@@ -23,58 +23,14 @@ const coresElemento = {
 };
 
 
-// --- SISTEMA DE VOZ (Web Speech API) ---
-let vozes = [];
-let vozMago = null;
-let audioHabilitado = false;
-
-function initSpeech() {
-    if ('speechSynthesis' in window) {
-        // As vozes podem carregar de forma assíncrona
-        vozes = window.speechSynthesis.getVoices();
-        window.speechSynthesis.onvoiceschanged = () => {
-            vozes = window.speechSynthesis.getVoices();
-            selecionarVozMago();
-        };
-        selecionarVozMago();
-    }
-}
-
-function selecionarVozMago() {
-    // Tenta pegar uma voz em português profundo ou inglês robótico/profundo
-    vozMago = vozes.find(v => v.lang.includes('pt') && (v.name.includes('Google') || v.name.includes('Luciana'))) ||
-              vozes.find(v => v.lang.includes('pt')) ||
-              vozes[0];
-}
-
-function falar(texto, pitch = 0.5, rate = 0.8) {
-    if (!audioHabilitado || !('speechSynthesis' in window)) return;
-
-    // Cancela a fala anterior para não sobrepor longamente (opcional)
-    // window.speechSynthesis.cancel();
-
-    const utterThis = new SpeechSynthesisUtterance(texto);
-    if (vozMago) {
-        utterThis.voice = vozMago;
-    }
-
-    // Configurações para soar como um mago antigo
-    utterThis.pitch = pitch; // Mais grave
-    utterThis.rate = rate;   // Mais lento
-    utterThis.volume = 1;
-
-    window.speechSynthesis.speak(utterThis);
-}
-
 function iniciarIntroducao() {
     const introScreen = document.getElementById('intro-screen');
     introScreen.style.display = 'none';
-    audioHabilitado = true;
 
-    falar("Saudações, aprendiz... Bem-vindo ao Clicker de Magos Elementais.", 0.4, 0.7);
-    setTimeout(() => {
-        falar("Seu objetivo é canalizar o poder dos elementos. Acumule mana, evolua seus feitiços, e derrote os mestres das masmorras...", 0.4, 0.8);
-    }, 4000);
+    // [GRAVAÇÃO DE VOZ - TEXTOS PARA A INTRODUÇÃO]
+    // O usuário irá colocar as gravações em áudio aqui.
+    // Texto 1: "Saudações, aprendiz... Bem-vindo ao Clicker de Magos Elementais."
+    // Texto 2: "Seu objetivo é canalizar o poder dos elementos. Acumule mana, evolua seus feitiços, e derrote os mestres das masmorras..."
 }
 // ---------------------------------------
 
@@ -284,7 +240,6 @@ window.onload = () => {
     if (introBtn) {
         introBtn.addEventListener('click', () => {
             // Se já tem save, oculta seleção. Se não, oculta só o intro.
-            initSpeech();
             iniciarIntroducao();
             // A tela de seleção já é visível por baixo
         });
@@ -647,8 +602,9 @@ function turnoAtaqueMago(dano, nomePoder, elementoPoder) {
     animacaoMagoAtacando = 10;
     playSound('click');
 
-    // Web Speech API: Falar o nome do feitiço
-    falar(nomePoder + "!", 0.6, 0.9);
+    // [GRAVAÇÃO DE VOZ - TEXTOS PARA OS FEITIÇOS]
+    // Aqui você pode tocar o áudio com base na variável "nomePoder".
+    // Exemplo de fala necessária: "Bola de Fogo!", "Raio Congelante!", etc.
 
     // Iniciar animação do projetil/ataque, que lidará com o dano e a vez do monstro depois.
     const startX = xMagoAventura + 16;
@@ -944,7 +900,8 @@ function desenharFundo() {
     const centroY = canvas.height / 2;
     const auraPulse = Math.sin(lastTime * 0.003) * 20; // pulsa suavemente
     const grad = ctx.createRadialGradient(centroX, centroY, 10, centroX, centroY, 200 + auraPulse);
-    grad.addColorStop(0, coresElemento[elementoSelecionado] + '33');
+    const corSelecionada = coresElemento[elementoSelecionado] || '#ffffff';
+    grad.addColorStop(0, corSelecionada + '33');
     grad.addColorStop(1, 'transparent');
 
     ctx.globalAlpha = 1.0;
@@ -954,6 +911,7 @@ function desenharFundo() {
 
 // Função utilitária para ajustar brilho de uma cor hex (para o sombreamento dinâmico)
 function ajustarCor(corHex, fator) {
+    if (!corHex) corHex = '#ffffff';
     let r = parseInt(corHex.substring(1, 3), 16);
     let g = parseInt(corHex.substring(3, 5), 16);
     let b = parseInt(corHex.substring(5, 7), 16);
