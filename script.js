@@ -808,15 +808,35 @@ function criarParticulas(qtd, x, y, burst = false) {
 
 function atualizarParticulas() {
     particulas = particulas.filter(p => {
+        // Ao invez de gravidade, flutuar suavemente para cima/esquerda (direção da mana)
+        // Interpolacao simples
+        const targetX = 20;
+        const targetY = 20;
+
+        // Aceleração forte em direção ao topo/esquerda
+        p.vx += (targetX - p.x) * 0.01;
+        p.vy += (targetY - p.y) * 0.01;
+
+        p.vx *= 0.90;
+        p.vy *= 0.90;
+
         p.x += p.vx;
         p.y += p.vy;
-        p.vy += 0.5; // Gravidade
         p.vida--;
 
         ctx.globalAlpha = Math.max(0, p.vida / p.maxVida);
         ctx.fillStyle = p.cor;
-        ctx.fillRect(p.x, p.y, 4, 4);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = p.cor;
+        ctx.shadowBlur = 0; // reset
         ctx.globalAlpha = 1.0; // Reset
+
+        // Some prematuramente se chegou muito perto do contador
+        const dist = Math.hypot(p.x - targetX, p.y - targetY);
+        if (dist < 30) p.vida -= 5;
 
         return p.vida > 0;
     });
@@ -2756,4 +2776,8 @@ function atualizarUI() {
     } else {
         rebirthBtn.disabled = true;
     }
+}
+
+function abrirConfig() {
+    document.getElementById('config-modal').classList.remove('hidden');
 }

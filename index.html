@@ -20,6 +20,18 @@
             <button id="start-intro-btn" class="element-btn" style="--btn-color: #8a2be2; font-size: 1rem; padding: 15px 30px;">Início</button>
         </div>
 
+
+        <!-- Modal de Configurações -->
+        <div id="config-modal" class="screen hidden" style="background: rgba(0,0,0,0.9); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%;">
+            <div style="background: #222; border: 4px solid #555; padding: 30px; border-radius: 10px; text-align: center; max-width: 400px;">
+                <h2 style="color: #fff; margin-bottom: 20px;">Configurações</h2>
+                <button onclick="document.getElementById('config-modal').classList.add('hidden')" style="margin-bottom: 20px; background: #444; color: white; padding: 10px; width: 100%;">Voltar ao Jogo</button>
+                <div style="border-top: 1px solid #555; margin: 20px 0;"></div>
+                <h4 style="color: #ff5555; margin-bottom: 10px;">Zona de Perigo</h4>
+                <p style="color: #aaa; font-size: 0.7rem; margin-bottom: 15px;">Atenção: Isso apagará TODO o seu progresso permanentemente.</p>
+                <button id="hard-reset-btn" onclick="hardReset()" style="background: #880000; color: white; padding: 10px; width: 100%; border: 2px solid #ff0000;">Reiniciar Tudo</button>
+            </div>
+        </div>
         <!-- Tela de Seleção de Elemento -->
         <div id="selection-screen" class="screen">
             <h1>Escolha seu Elemento</h1>
@@ -36,10 +48,17 @@
         <!-- Tela do Jogo Principal -->
         <div id="game-screen" class="screen hidden">
             <header>
+<button id="config-btn" onclick="abrirConfig()" style="position: absolute; top: 10px; right: 10px; background: transparent; border: none; font-size: 1.2rem; cursor: pointer; filter: grayscale(1);">⚙️</button>
                 <div class="stats">
                     <div class="stat-column">
                         <p>Nv: <span id="level-display">1</span></p>
-                        <p>XP: <span id="xp-display">0</span>/<span id="xp-max-display">100</span></p>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <span>XP:</span>
+                            <div class="xp-progress-bg">
+                                <div id="xp-progress-bar"></div>
+                                <span class="xp-text"><span id="xp-display">0</span>/<span id="xp-max-display">100</span></span>
+                            </div>
+                        </div>
                     </div>
                     <div class="stat-column">
                         <p>Mana: <span id="mana-display">0</span></p>
@@ -56,7 +75,7 @@
                         <div id="rebirth-progress-bar"></div>
                     </div>
                     <p id="rebirth-percentage" style="font-size: 0.6rem;">0% (Requer 1T Mana)</p>
-                    <button id="hard-reset-btn" onclick="hardReset()" style="margin-top: 5px; background: #880000; font-size: 0.6rem; padding: 5px;">Reiniciar Tudo</button>
+
                 </div>
             </header>
 
@@ -80,7 +99,7 @@
                             <span class="icon-label">Caixas</span>
                         </button>
                         <button class="icon-btn" data-target="inventario" title="Inventário">
-                            <img src="assets/images/Inventário.png" alt="Inventário">
+                            <img src="assets/images/Inventario.png" alt="Inventário">
                             <span class="icon-label">Inventário</span>
                         </button>
                         <button class="icon-btn" data-target="aventuras" title="Aventuras">
