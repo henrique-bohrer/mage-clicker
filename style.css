@@ -228,13 +228,15 @@ canvas {
 }
 
 .sidebar {
-    flex: 1;
-    min-width: 320px;
-    max-width: 400px;
-    background-color: var(--panel-bg);
-    border: 4px solid var(--border-color);
+    width: 100px; /* Just enough for the 70px icons + padding */
+    min-width: 100px;
+    max-width: 100px;
+    background-color: transparent;
+    border: none;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
     min-height: 0;
 }
 
@@ -465,8 +467,15 @@ canvas {
         flex-direction: column;
     }
     .sidebar {
+        width: 100%;
         max-width: 100%;
-        flex: 1;
+        height: 80px;
+        min-height: 80px;
+        flex: none;
+    }
+    .icon-menu {
+        flex-direction: row;
+        width: 100%;
     }
     .canvas-container {
         flex: 1;
@@ -495,8 +504,8 @@ canvas {
     background: transparent;
     border: none;
     border-radius: 10px;
-    width: 150px;
-    height: 150px;
+    width: 70px;
+    height: 70px;
     padding: 0;
     cursor: pointer;
     transition: transform 0.2s, filter 0.2s;
