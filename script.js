@@ -1008,6 +1008,13 @@ function ajustarCor(corHex, fator) {
     return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
+// Retorna o estágio visual do mago com base no nível atual
+function obterTierMago() {
+    if (level >= 30) return 3; // Arquimago
+    if (level >= 10) return 2; // Adepto
+    return 1; // Aprendiz
+}
+
 function desenharMago(x, y) {
     ctx.save();
     ctx.translate(x, y);
@@ -1058,6 +1065,10 @@ function desenharMago(x, y) {
     const B = '#000000'; // Black/Eyes
     const X = null; // Vazio
 
+    const tier = obterTierMago();
+    // Se for Tier 2 ou maior, os olhos brilham com a cor do elemento (L). Se não, são pretos (B).
+    const EYE_COLOR = (tier >= 2) ? L : B;
+
     // Colors derived from equipments (already declared above for aura)
     // const hatEq = equipamentosDB[equipamentosEquipados.hat];
     // const robeEq = equipamentosDB[equipamentosEquipados.robe];
@@ -1095,7 +1106,7 @@ function desenharMago(x, y) {
     // Layer 1: Body / Head (Base, Face & Beard)
     const bodySprite = makeGrid();
     for(let x=13; x<=21; x++) bodySprite[13][x] = S;
-    bodySprite[14][13]=S; bodySprite[14][14]=S; bodySprite[14][15]=B; bodySprite[14][16]=S; bodySprite[14][17]=S; bodySprite[14][18]=S; bodySprite[14][19]=B; bodySprite[14][20]=S; bodySprite[14][21]=S;
+    bodySprite[14][13]=S; bodySprite[14][14]=S; bodySprite[14][15]=EYE_COLOR; bodySprite[14][16]=S; bodySprite[14][17]=S; bodySprite[14][18]=S; bodySprite[14][19]=EYE_COLOR; bodySprite[14][20]=S; bodySprite[14][21]=S;
     for(let x=13; x<=21; x++) bodySprite[15][x] = S;
     for(let x=13; x<=21; x++) bodySprite[16][x] = W;
     for(let x=13; x<=21; x++) bodySprite[17][x] = W;
@@ -1103,6 +1114,13 @@ function desenharMago(x, y) {
     bodySprite[19][15]=W; bodySprite[19][16]=W; bodySprite[19][17]=W; bodySprite[19][18]=W; bodySprite[19][19]=W;
     bodySprite[20][16]=W; bodySprite[20][17]=W; bodySprite[20][18]=W;
     bodySprite[21][16]=W; bodySprite[21][17]=W; bodySprite[21][18]=W;
+
+    // NOVO: Barba longa para Tier 3 (Arquimago)
+    if (tier >= 3) {
+        bodySprite[22][16]=W; bodySprite[22][17]=W; bodySprite[22][18]=W;
+        bodySprite[23][16]=W; bodySprite[23][17]=W; bodySprite[23][18]=W;
+        bodySprite[24][17]=W;
+    }
 
     // Layer 2: Robe
     let robeSprite = makeGrid();
@@ -2735,7 +2753,7 @@ function ganharXP(amount) {
             if (poderesMilestone.length > 0) {
                 const pGanho = poderesMilestone[Math.floor(Math.random() * poderesMilestone.length)];
                 poderesInventario.push(pGanho.id);
-                alert(`Parabéns! Você alcançou o Nível ${level} e desbloqueou o poder: ${pGanho.nome}!`);
+                criarFloatingText("Nível " + level + ": " + pGanho.nome, canvas.width/2, canvas.height/2);
                 renderizarInventario();
             }
         }
