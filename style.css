@@ -209,7 +209,7 @@ main {
 
 .canvas-container {
     flex: 1;
-    max-width: 600px; /* Limita a largura para ficar mais quadrado/menor como o usuário pediu */
+    max-width: 1080px; /* Limita a largura para ficar mais quadrado/menor como o usuário pediu */
     margin: 0 auto; /* Centraliza se a tela for muito grande */
     display: flex;
     justify-content: center;
@@ -510,7 +510,7 @@ canvas {
     background: transparent;
     border: none;
     border-radius: 10px;
-    width: 100px;
+    width: 205px;
     height: auto;
     padding: 5px;
     cursor: pointer;
@@ -535,8 +535,8 @@ canvas {
 }
 
 .icon-btn img {
-    width: 80px;
-    height: 80px;
+    width: 90px;
+    height: auto;
     object-fit: contain;
     border-radius: 10px;
 }
