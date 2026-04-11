@@ -1038,10 +1038,10 @@ function desenharMago(x, y) {
     const B = '#000000'; // Black/Eyes
     const X = null; // Vazio
 
-    // Colors derived from equipments
-    const hatEq = equipamentosDB[equipamentosEquipados.hat];
-    const robeEq = equipamentosDB[equipamentosEquipados.robe];
-    const staffEq = equipamentosDB[equipamentosEquipados.staff];
+    // Colors derived from equipments (already declared above for aura)
+    // const hatEq = equipamentosDB[equipamentosEquipados.hat];
+    // const robeEq = equipamentosDB[equipamentosEquipados.robe];
+    // const staffEq = equipamentosDB[equipamentosEquipados.staff];
 
     // Cores baseadas na raridade dos equipamentos (substitui a cor do elemento se equipado)
     let HC = hatEq && hatEq.id !== 'chapeu_aprendiz' ? raridades[hatEq.raridade].cor : C;
