@@ -230,9 +230,9 @@ canvas {
 }
 
 .sidebar {
-    width: 180px; /* Mais espaço para os botões maiores e os textos */
-    min-width: 180px;
-    max-width: 180px;
+    width: 240px; /* Espaço para duas colunas de botões */
+    min-width: 240px;
+    max-width: 240px;
     background-color: transparent;
     border: none;
     display: flex;
@@ -240,7 +240,7 @@ canvas {
     align-items: center;
     justify-content: center;
     min-height: 0;
-    margin-left: auto; /* Empurra para a direita se o canvas ficar menor */
+    margin-left: auto;
 }
 
 .tabs {
@@ -496,11 +496,14 @@ canvas {
 /* Icon Menu */
 .icon-menu {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 15px;
     align-items: center;
     justify-content: center;
+    align-content: center;
     height: 100%;
+    width: 100%;
 }
 
 .icon-btn {
