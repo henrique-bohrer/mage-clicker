@@ -495,8 +495,8 @@ canvas {
     background: transparent;
     border: none;
     border-radius: 10px;
-    width: 70px;
-    height: 70px;
+    width: 150px;
+    height: 150px;
     padding: 0;
     cursor: pointer;
     transition: transform 0.2s, filter 0.2s;
