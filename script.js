@@ -2566,13 +2566,15 @@ function renderizarInventario() {
     // Ordenação combinada ou separada, vamos separar para ficar organizado
     const raridadeRank = { 'mitico': 6, 'lendario': 5, 'epico': 4, 'raro': 3, 'incomum': 2, 'comum': 1 };
 
-    if (filterSelect && filterSelect.value === 'alpha') {
-        itemsMochila.sort((a, b) => equipamentosDB[a].nome.localeCompare(equipamentosDB[b].nome));
-        poderesMochila.sort((a, b) => poderesDB[a].nome.localeCompare(poderesDB[b].nome));
-    } else {
-        itemsMochila.sort((a, b) => raridadeRank[equipamentosDB[b].raridade] - raridadeRank[equipamentosDB[a].raridade]);
-        poderesMochila.sort((a, b) => raridadeRank[poderesDB[b].raridade] - raridadeRank[poderesDB[a].raridade]);
-    }
+    // Ordenação dos itens da mochila
+if (filterSelect && filterSelect.value === 'alpha') {
+    itemsMochila.sort((a, b) => (equipamentosDB[a]?.nome || "").localeCompare(equipamentosDB[b]?.nome || ""));
+    poderesMochila.sort((a, b) => (poderesDB[a]?.nome || "").localeCompare(poderesDB[b]?.nome || ""));
+} else {
+    itemsMochila.sort((a, b) => (raridadeRank[equipamentosDB[b]?.raridade] || 0) - (raridadeRank[equipamentosDB[a]?.raridade] || 0));
+    // CORREÇÃO AQUI: Adicionado ?. e fallback || 0
+    poderesMochila.sort((a, b) => (raridadeRank[poderesDB[b]?.raridade] || 0) - (raridadeRank[poderesDB[a]?.raridade] || 0));
+}
 
     // Adiciona equipamentos na mochila
     itemsMochila.forEach(eqId => {
@@ -2591,9 +2593,13 @@ function renderizarInventario() {
         mochilaContainer.appendChild(sep);
 
         let poderesAgrupados = {};
-        poderesMochila.forEach(pid => {
-            poderesAgrupados[pid] = (poderesAgrupados[pid] || 0) + 1;
-        });
+        // Localize onde os poderes são adicionados à mochila:
+poderesMochila.forEach(pid => {
+    const templatePoder = poderesDB[pid];
+    if (!templatePoder) return; // Pula se o ID não existir no banco de dados
+
+    poderesAgrupados[pid] = (poderesAgrupados[pid] || 0) + 1;
+});
 
         Object.keys(poderesAgrupados).forEach(pid => {
             const qtde = poderesAgrupados[pid];
