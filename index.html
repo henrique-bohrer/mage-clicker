@@ -1,186 +1,430 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Clicker de Magos Elementais</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-</head>
-<body>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
     <div id="app">
+      <!-- Intro Screen para interação inicial do usuário -->
+      <div
+        id="intro-screen"
+        class="screen"
+        style="
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background: #000;
+          z-index: 1000;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+        "
+      >
+        <h1
+          style="
+            color: #fff;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            text-shadow: 0 0 10px #ff00ff;
+          "
+        >
+          Bem-vindo ao Mage Clicker
+        </h1>
+        <p
+          style="
+            color: #aaa;
+            margin-bottom: 30px;
+            font-size: 0.8rem;
+            text-align: center;
+            max-width: 80%;
+          "
+        >
+          Mergulhe em um mundo de magias elementais.<br />
+          Clique para jogar e ouvir a lenda.
+        </p>
+        <button
+          id="start-intro-btn"
+          class="element-btn"
+          style="--btn-color: #8a2be2; font-size: 1rem; padding: 15px 30px"
+        >
+          Início
+        </button>
+      </div>
 
-        <!-- Intro Screen para interação inicial do usuário -->
-        <div id="intro-screen" class="screen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: #000; z-index: 1000; position: fixed; top: 0; left: 0; width: 100%; height: 100%;">
-            <h1 style="color: #fff; margin-bottom: 20px; font-size: 2rem; text-shadow: 0 0 10px #ff00ff;">Bem-vindo ao Mage Clicker</h1>
-            <p style="color: #aaa; margin-bottom: 30px; font-size: 0.8rem; text-align: center; max-width: 80%;">
-                Mergulhe em um mundo de magias elementais.<br>
-                Clique para jogar e ouvir a lenda.
+      <!-- Modal de Configurações -->
+      <div
+        id="config-modal"
+        class="screen hidden"
+        style="
+          background: rgba(0, 0, 0, 0.9);
+          z-index: 2000;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+        "
+      >
+        <div
+          style="
+            background: #222;
+            border: 4px solid #555;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
+          "
+        >
+          <h2 style="color: #fff; margin-bottom: 20px">Configurações</h2>
+          <button
+            onclick="
+              document.getElementById('config-modal').classList.add('hidden')
+            "
+            style="
+              margin-bottom: 20px;
+              background: #444;
+              color: white;
+              padding: 10px;
+              width: 100%;
+            "
+          >
+            Voltar ao Jogo
+          </button>
+          <div style="border-top: 1px solid #555; margin: 20px 0"></div>
+          <h4 style="color: #ff5555; margin-bottom: 10px">Zona de Perigo</h4>
+          <p style="color: #aaa; font-size: 0.7rem; margin-bottom: 15px">
+            Atenção: Isso apagará TODO o seu progresso permanentemente.
+          </p>
+          <button
+            id="hard-reset-btn"
+            onclick="hardReset()"
+            style="
+              background: #880000;
+              color: white;
+              padding: 10px;
+              width: 100%;
+              border: 2px solid #ff0000;
+            "
+          >
+            Reiniciar Tudo
+          </button>
+        </div>
+      </div>
+      <!-- Tela de Seleção de Elemento -->
+      <div id="selection-screen" class="screen">
+        <h1>Escolha seu Elemento</h1>
+        <div class="element-grid">
+          <button
+            class="element-btn"
+            data-element="fogo"
+            style="--btn-color: #ff4500"
+          >
+            Fogo
+          </button>
+          <button
+            class="element-btn"
+            data-element="agua"
+            style="--btn-color: #1e90ff"
+          >
+            Água
+          </button>
+          <button
+            class="element-btn"
+            data-element="ar"
+            style="--btn-color: #00fa9a"
+          >
+            Ar
+          </button>
+          <button
+            class="element-btn"
+            data-element="eletricidade"
+            style="--btn-color: #ffd700"
+          >
+            Eletricidade
+          </button>
+          <button
+            class="element-btn"
+            data-element="terra"
+            style="--btn-color: #8b4513"
+          >
+            Terra
+          </button>
+          <button
+            class="element-btn"
+            data-element="luz"
+            style="--btn-color: #ffffff"
+          >
+            Luz
+          </button>
+        </div>
+      </div>
+
+      <!-- Tela do Jogo Principal -->
+      <div id="game-screen" class="screen hidden">
+        <header>
+          <button
+            id="config-btn"
+            onclick="abrirConfig()"
+            style="
+              position: absolute;
+              top: 10px;
+              right: 10px;
+              background: transparent;
+              border: none;
+              font-size: 1.2rem;
+              cursor: pointer;
+              filter: grayscale(1);
+            "
+          >
+            ⚙️
+          </button>
+          <div class="stats">
+            <div class="stat-column">
+              <p>Nv: <span id="level-display">1</span></p>
+              <div style="display: flex; align-items: center; gap: 5px">
+                <span>XP:</span>
+                <div class="xp-progress-bg">
+                  <div id="xp-progress-bar"></div>
+                  <span class="xp-text"
+                    ><span id="xp-display">0</span>/<span id="xp-max-display"
+                      >100</span
+                    ></span
+                  >
+                </div>
+              </div>
+            </div>
+            <div class="stat-column">
+              <p>Mana: <span id="mana-display">0</span></p>
+              <p>Mana/s: <span id="mana-per-sec-display">0</span></p>
+            </div>
+            <div class="stat-column">
+              <p>
+                Diamantes:
+                <span id="diamonds-display" style="color: #00ffff">0</span>
+              </p>
+              <p>Prestige: <span id="prestige-display">1</span>x</p>
+            </div>
+          </div>
+          <div class="rebirth-container">
+            <button id="rebirth-btn" disabled>Renascer</button>
+            <div class="rebirth-progress-bg">
+              <div id="rebirth-progress-bar"></div>
+            </div>
+            <p id="rebirth-percentage" style="font-size: 0.6rem">
+              0% (Requer 1T Mana)
             </p>
-            <button id="start-intro-btn" class="element-btn" style="--btn-color: #8a2be2; font-size: 1rem; padding: 15px 30px;">Início</button>
-        </div>
+          </div>
+        </header>
 
+        <main>
+          <div class="canvas-container">
+            <canvas id="gameCanvas" width="400" height="400"></canvas>
+          </div>
 
-        <!-- Modal de Configurações -->
-        <div id="config-modal" class="screen hidden" style="background: rgba(0,0,0,0.9); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%;">
-            <div style="background: #222; border: 4px solid #555; padding: 30px; border-radius: 10px; text-align: center; max-width: 400px;">
-                <h2 style="color: #fff; margin-bottom: 20px;">Configurações</h2>
-                <button onclick="document.getElementById('config-modal').classList.add('hidden')" style="margin-bottom: 20px; background: #444; color: white; padding: 10px; width: 100%;">Voltar ao Jogo</button>
-                <div style="border-top: 1px solid #555; margin: 20px 0;"></div>
-                <h4 style="color: #ff5555; margin-bottom: 10px;">Zona de Perigo</h4>
-                <p style="color: #aaa; font-size: 0.7rem; margin-bottom: 15px;">Atenção: Isso apagará TODO o seu progresso permanentemente.</p>
-                <button id="hard-reset-btn" onclick="hardReset()" style="background: #880000; color: white; padding: 10px; width: 100%; border: 2px solid #ff0000;">Reiniciar Tudo</button>
+          <aside class="sidebar">
+            <div class="icon-menu">
+              <button class="icon-btn" data-target="loja" title="Loja">
+                <img src="assets/images/Loja.png" alt="Loja" />
+                <span class="icon-label">Loja</span>
+              </button>
+              <button class="icon-btn" data-target="quests" title="Quests">
+                <img src="assets/images/Quests.png" alt="Quests" />
+                <span class="icon-label">Quests</span>
+              </button>
+              <button class="icon-btn" data-target="caixas" title="Caixas">
+                <img src="assets/images/Caixas.png" alt="Caixas" />
+                <span class="icon-label">Caixas</span>
+              </button>
+              <button
+                class="icon-btn"
+                data-target="inventario"
+                title="Inventário"
+              >
+                <img src="assets/images/Inventario.png" alt="Inventário" />
+                <span class="icon-label">Inventário</span>
+              </button>
+              <button
+                class="icon-btn"
+                data-target="aventuras"
+                title="Aventuras"
+              >
+                <img src="assets/images/Aventuras.png" alt="Aventuras" />
+                <span class="icon-label">Aventuras</span>
+              </button>
             </div>
-        </div>
-        <!-- Tela de Seleção de Elemento -->
-        <div id="selection-screen" class="screen">
-            <h1>Escolha seu Elemento</h1>
-            <div class="element-grid">
-                <button class="element-btn" data-element="fogo" style="--btn-color: #ff4500;">Fogo</button>
-                <button class="element-btn" data-element="agua" style="--btn-color: #1e90ff;">Água</button>
-                <button class="element-btn" data-element="ar" style="--btn-color: #00fa9a;">Ar</button>
-                <button class="element-btn" data-element="eletricidade" style="--btn-color: #ffd700;">Eletricidade</button>
-                <button class="element-btn" data-element="terra" style="--btn-color: #8b4513;">Terra</button>
-                <button class="element-btn" data-element="luz" style="--btn-color: #ffffff;">Luz</button>
+
+            <div id="loja-tab" class="tab-content active">
+              <div
+                class="mana-converter"
+                style="
+                  margin-bottom: 20px;
+                  padding: 10px;
+                  background: #222;
+                  border: 2px solid #555;
+                  text-align: center;
+                "
+              >
+                <h4
+                  style="color: #00ffff; font-size: 10px; margin-bottom: 10px"
+                >
+                  Conversor de Mana
+                </h4>
+                <p style="font-size: 8px; color: #aaa; margin-bottom: 10px">
+                  Converta 1 Milhão de Mana em 10 Diamantes.
+                </p>
+                <button
+                  onclick="converterManaEmDiamantes()"
+                  style="
+                    width: 100%;
+                    padding: 10px;
+                    background: #008888;
+                    color: white;
+                    border: 2px solid #00ffff;
+                    font-family: &quot;Press Start 2P&quot;, cursive;
+                    font-size: 8px;
+                    cursor: pointer;
+                  "
+                >
+                  Converter
+                </button>
+              </div>
+              <h3 style="margin-bottom: 10px; color: #ffd700">Upgrades</h3>
+              <div id="upgrades-container">
+                <!-- Upgrades vão aqui via JS -->
+              </div>
             </div>
-        </div>
 
-        <!-- Tela do Jogo Principal -->
-        <div id="game-screen" class="screen hidden">
-            <header>
-<button id="config-btn" onclick="abrirConfig()" style="position: absolute; top: 10px; right: 10px; background: transparent; border: none; font-size: 1.2rem; cursor: pointer; filter: grayscale(1);">⚙️</button>
-                <div class="stats">
-                    <div class="stat-column">
-                        <p>Nv: <span id="level-display">1</span></p>
-                        <div style="display: flex; align-items: center; gap: 5px;">
-                            <span>XP:</span>
-                            <div class="xp-progress-bg">
-                                <div id="xp-progress-bar"></div>
-                                <span class="xp-text"><span id="xp-display">0</span>/<span id="xp-max-display">100</span></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="stat-column">
-                        <p>Mana: <span id="mana-display">0</span></p>
-                        <p>Mana/s: <span id="mana-per-sec-display">0</span></p>
-                    </div>
-                    <div class="stat-column">
-                        <p>Diamantes: <span id="diamonds-display" style="color: #00ffff;">0</span></p>
-                        <p>Prestige: <span id="prestige-display">1</span>x</p>
-                    </div>
+            <div id="quests-tab" class="tab-content">
+              <div id="quests-container">
+                <!-- Quests via JS -->
+              </div>
+            </div>
+
+            <div id="caixas-tab" class="tab-content">
+              <div id="caixas-container">
+                <!-- Lootboxes via JS -->
+              </div>
+            </div>
+
+            <div id="inventario-tab" class="tab-content">
+              <div class="inv-controls" style="margin-bottom: 10px">
+                <label style="font-size: 0.7rem">Filtrar: </label>
+                <select
+                  id="inv-filter"
+                  onchange="renderizarInventario()"
+                  style="
+                    background: #222;
+                    color: #fff;
+                    font-family: &quot;Press Start 2P&quot;, cursive;
+                    font-size: 0.6rem;
+                    padding: 5px;
+                    border: 1px solid #444;
+                  "
+                >
+                  <option value="rarity">Raridade</option>
+                  <option value="alpha">Alfabética</option>
+                </select>
+              </div>
+              <h3>Equipamentos</h3>
+              <div id="equipados-container" class="inv-grid">
+                <!-- Equipados via JS -->
+              </div>
+              <h3 style="margin-top: 15px">Poderes Equipados (Aventura)</h3>
+              <button
+                onclick="equiparMelhoresPoderes()"
+                style="
+                  margin-bottom: 5px;
+                  background: #550055;
+                  color: #fff;
+                  font-size: 0.6rem;
+                  padding: 5px;
+                "
+              >
+                Equipar o Melhor
+              </button>
+              <div id="poderes-equipados-container" class="inv-grid">
+                <!-- Poderes equipados via JS -->
+              </div>
+              <h3 style="margin-top: 15px">Mochila</h3>
+              <div id="mochila-container" class="inv-grid">
+                <!-- Mochila via JS -->
+              </div>
+            </div>
+
+            <div id="aventuras-tab" class="tab-content">
+              <div id="aventuras-container">
+                <!-- Aventuras via JS -->
+              </div>
+              <div id="batalha-ui" class="hidden">
+                <h3
+                  style="
+                    text-align: center;
+                    margin-bottom: 10px;
+                    color: #ff5555;
+                  "
+                >
+                  Batalha!
+                </h3>
+                <p
+                  id="batalha-log"
+                  style="
+                    font-size: 0.6rem;
+                    color: #fff;
+                    background: #222;
+                    padding: 10px;
+                    min-height: 40px;
+                    margin-bottom: 10px;
+                  "
+                ></p>
+                <div
+                  id="poderes-batalha-container"
+                  class="inv-grid"
+                  style="grid-template-columns: 1fr 1fr; gap: 5px"
+                >
+                  <!-- Botões de ataque dos poderes equipados -->
                 </div>
-                <div class="rebirth-container">
-                    <button id="rebirth-btn" disabled>Renascer</button>
-                    <div class="rebirth-progress-bg">
-                        <div id="rebirth-progress-bar"></div>
-                    </div>
-                    <p id="rebirth-percentage" style="font-size: 0.6rem;">0% (Requer 1T Mana)</p>
+                <button
+                  id="btn-leave-adventure"
+                  style="
+                    margin-top: 20px;
+                    width: 100%;
+                    padding: 10px;
+                    background: #555;
+                    color: white;
+                  "
+                  onclick="sairAventura()"
+                >
+                  Fugir da Batalha
+                </button>
+              </div>
+            </div>
 
-                </div>
-            </header>
-
-            <main>
-                <div class="canvas-container">
-                    <canvas id="gameCanvas" width="400" height="400"></canvas>
-                </div>
-
-                <aside class="sidebar">
-                    <div class="icon-menu">
-                        <button class="icon-btn" data-target="loja" title="Loja">
-                            <img src="assets/images/Loja.png" alt="Loja">
-                            <span class="icon-label">Loja</span>
-                        </button>
-                        <button class="icon-btn" data-target="quests" title="Quests">
-                            <img src="assets/images/Quests.png" alt="Quests">
-                            <span class="icon-label">Quests</span>
-                        </button>
-                        <button class="icon-btn" data-target="caixas" title="Caixas">
-                            <img src="assets/images/Caixas.png" alt="Caixas">
-                            <span class="icon-label">Caixas</span>
-                        </button>
-                        <button class="icon-btn" data-target="inventario" title="Inventário">
-                            <img src="assets/images/Inventário.png" alt="Inventário">
-                            <span class="icon-label">Inventário</span>
-                        </button>
-                        <button class="icon-btn" data-target="aventuras" title="Aventuras">
-                            <img src="assets/images/Aventuras.png" alt="Aventuras">
-                            <span class="icon-label">Aventuras</span>
-                        </button>
-                    </div>
-
-                    <div id="loja-tab" class="tab-content active">
-                        <div class="mana-converter" style="margin-bottom: 20px; padding: 10px; background: #222; border: 2px solid #555; text-align: center;">
-                            <h4 style="color: #00ffff; font-size: 10px; margin-bottom: 10px;">Conversor de Mana</h4>
-                            <p style="font-size: 8px; color: #aaa; margin-bottom: 10px;">Converta 1 Milhão de Mana em 10 Diamantes.</p>
-                            <button onclick="converterManaEmDiamantes()" style="width: 100%; padding: 10px; background: #008888; color: white; border: 2px solid #00ffff; font-family: 'Press Start 2P', cursive; font-size: 8px; cursor: pointer;">Converter</button>
-                        </div>
-                        <h3 style="margin-bottom: 10px; color: #ffd700;">Upgrades</h3>
-                        <div id="upgrades-container">
-                            <!-- Upgrades vão aqui via JS -->
-                        </div>
-                    </div>
-
-                    <div id="quests-tab" class="tab-content">
-                        <div id="quests-container">
-                            <!-- Quests via JS -->
-                        </div>
-                    </div>
-
-                    <div id="caixas-tab" class="tab-content">
-                        <div id="caixas-container">
-                            <!-- Lootboxes via JS -->
-                        </div>
-                    </div>
-
-                    <div id="inventario-tab" class="tab-content">
-                        <div class="inv-controls" style="margin-bottom: 10px;">
-                            <label style="font-size: 0.7rem;">Filtrar: </label>
-                            <select id="inv-filter" onchange="renderizarInventario()" style="background: #222; color: #fff; font-family: 'Press Start 2P', cursive; font-size: 0.6rem; padding: 5px; border: 1px solid #444;">
-                                <option value="rarity">Raridade</option>
-                                <option value="alpha">Alfabética</option>
-                            </select>
-                        </div>
-                        <h3>Equipamentos</h3>
-                        <div id="equipados-container" class="inv-grid">
-                            <!-- Equipados via JS -->
-                        </div>
-                        <h3 style="margin-top: 15px;">Poderes Equipados (Aventura)</h3>
-                        <button onclick="equiparMelhoresPoderes()" style="margin-bottom: 5px; background: #550055; color: #fff; font-size: 0.6rem; padding: 5px;">Equipar o Melhor</button>
-                        <div id="poderes-equipados-container" class="inv-grid">
-                            <!-- Poderes equipados via JS -->
-                        </div>
-                        <h3 style="margin-top: 15px;">Mochila</h3>
-                        <div id="mochila-container" class="inv-grid">
-                            <!-- Mochila via JS -->
-                        </div>
-                    </div>
-
-                    <div id="aventuras-tab" class="tab-content">
-                        <div id="aventuras-container">
-                            <!-- Aventuras via JS -->
-                        </div>
-                        <div id="batalha-ui" class="hidden">
-                            <h3 style="text-align: center; margin-bottom: 10px; color: #ff5555;">Batalha!</h3>
-                            <p id="batalha-log" style="font-size: 0.6rem; color: #fff; background: #222; padding: 10px; min-height: 40px; margin-bottom: 10px;"></p>
-                            <div id="poderes-batalha-container" class="inv-grid" style="grid-template-columns: 1fr 1fr; gap: 5px;">
-                                <!-- Botões de ataque dos poderes equipados -->
-                            </div>
-                            <button id="btn-leave-adventure" style="margin-top: 20px; width: 100%; padding: 10px; background: #555; color: white;" onclick="sairAventura()">Fugir da Batalha</button>
-                        </div>
-                    </div>
-
-                <!-- Modais -->
-                <div id="modal-overlay" class="hidden">
-                    <div id="modal-content-box">
-                        <button id="close-modal-btn">X</button>
-                        <h2 id="modal-title">Título</h2>
-                        <div id="modal-body"></div>
-                    </div>
-                </div>
-</aside>
-            </main>
-        </div>
+            <!-- Modais -->
+            <div id="modal-overlay" class="hidden">
+              <div id="modal-content-box">
+                <button id="close-modal-btn">X</button>
+                <h2 id="modal-title">Título</h2>
+                <div id="modal-body"></div>
+              </div>
+            </div>
+          </aside>
+        </main>
+      </div>
     </div>
     <script src="script.js"></script>
-</body>
+  </body>
 </html>

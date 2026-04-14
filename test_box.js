@@ -21,25 +21,34 @@ const puppeteer = require('puppeteer');
     await page.click('.icon-btn[data-target="caixas"]');
     await new Promise(r => setTimeout(r, 500));
 
-    // Check modal contents
-    const caixasHtml = await page.evaluate(() => document.getElementById('caixas-container').innerHTML);
-    console.log("Caixas HTML:", caixasHtml);
+    // Click first box button
+    const buyBtn = await page.$('#caixas-container .upgrade-btn');
+    if (buyBtn) {
+        await buyBtn.click();
+        console.log("Clicked box");
+        await new Promise(r => setTimeout(r, 100));
 
-    // Try to click the first button using evaluate
-    await page.evaluate(() => {
-        const buttons = document.querySelectorAll('#caixas-container .upgrade-btn');
-        if (buttons.length > 0) {
-            buttons[0].click();
-        }
-    });
-    console.log("Clicked box via evaluate");
+        // Wait for the open animation
+        await new Promise(r => setTimeout(r, 3000));
 
-    // Wait for the open animation
-    await new Promise(r => setTimeout(r, 3000));
+        // Check if modal is hidden
+        const isModalVisible = await page.evaluate(() => !document.getElementById('modal-overlay').classList.contains('hidden'));
+        console.log("Is Modal Visible after clicking box:", isModalVisible);
 
-    // Check if modal is hidden
-    const isModalVisible = await page.evaluate(() => !document.getElementById('modal-overlay').classList.contains('hidden'));
-    console.log("Is Modal Visible after clicking box:", isModalVisible);
+        // Check what's currently in the modal
+        const modalHtml = await page.evaluate(() => document.getElementById('modal-content-box').innerHTML);
+        // console.log("Modal HTML:", modalHtml);
+
+        // Check if item was received by looking at the modal content
+        const itemReceivedText = await page.evaluate(() => {
+            const h2 = document.querySelector('#modal-content-box h2');
+            return h2 ? h2.innerText : null;
+        });
+        console.log("Item received text:", itemReceivedText);
+
+    } else {
+        console.log("Could not find box button.");
+    }
 
     await browser.close();
     process.exit(0);
