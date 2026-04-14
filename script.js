@@ -425,10 +425,24 @@ function carregarJogo() {
                     if (quests[index]) quests[index].completada = qData.completada;
                 });
             }
-            if (dados.inventario) inventario = dados.inventario;
-            if (dados.equipamentosEquipados) equipamentosEquipados = dados.equipamentosEquipados;
-            if (dados.poderesInventario) poderesInventario = dados.poderesInventario;
-            if (dados.poderesEquipados) poderesEquipados = dados.poderesEquipados;
+            if (dados.inventario) {
+                inventario = dados.inventario.filter(id => equipamentosDB[id]);
+            }
+            if (dados.equipamentosEquipados) {
+                equipamentosEquipados = dados.equipamentosEquipados;
+                // Limpeza rápida para equipamentosEquipados caso existam keys obsoletas
+                for (let k in equipamentosEquipados) {
+                    if (equipamentosEquipados[k] && !equipamentosDB[equipamentosEquipados[k]]) {
+                        equipamentosEquipados[k] = null;
+                    }
+                }
+            }
+            if (dados.poderesInventario) {
+                poderesInventario = dados.poderesInventario.filter(id => poderesDB[id]);
+            }
+            if (dados.poderesEquipados) {
+                poderesEquipados = dados.poderesEquipados.map(id => poderesDB[id] ? id : null);
+            }
 
             if (dados.elementoSelecionado) {
                 elementoSelecionado = dados.elementoSelecionado;
@@ -2174,6 +2188,8 @@ function abrirCaixa(index) {
     const caixa = caixas[index];
     if (diamantes >= caixa.custo) {
         diamantes -= caixa.custo;
+        atualizarUI();
+        salvarJogo();
         playSound('rebirth'); // Som de caixa abrindo
 
         // Sorteio de Raridade
@@ -2566,15 +2582,13 @@ function renderizarInventario() {
     // Ordenação combinada ou separada, vamos separar para ficar organizado
     const raridadeRank = { 'mitico': 6, 'lendario': 5, 'epico': 4, 'raro': 3, 'incomum': 2, 'comum': 1 };
 
-    // Ordenação dos itens da mochila
-if (filterSelect && filterSelect.value === 'alpha') {
-    itemsMochila.sort((a, b) => (equipamentosDB[a]?.nome || "").localeCompare(equipamentosDB[b]?.nome || ""));
-    poderesMochila.sort((a, b) => (poderesDB[a]?.nome || "").localeCompare(poderesDB[b]?.nome || ""));
-} else {
-    itemsMochila.sort((a, b) => (raridadeRank[equipamentosDB[b]?.raridade] || 0) - (raridadeRank[equipamentosDB[a]?.raridade] || 0));
-    // CORREÇÃO AQUI: Adicionado ?. e fallback || 0
-    poderesMochila.sort((a, b) => (raridadeRank[poderesDB[b]?.raridade] || 0) - (raridadeRank[poderesDB[a]?.raridade] || 0));
-}
+    if (filterSelect && filterSelect.value === 'alpha') {
+        itemsMochila.sort((a, b) => equipamentosDB[a].nome.localeCompare(equipamentosDB[b].nome));
+        poderesMochila.sort((a, b) => poderesDB[a].nome.localeCompare(poderesDB[b].nome));
+    } else {
+        itemsMochila.sort((a, b) => raridadeRank[equipamentosDB[b].raridade] - raridadeRank[equipamentosDB[a].raridade]);
+        poderesMochila.sort((a, b) => raridadeRank[poderesDB[b].raridade] - raridadeRank[poderesDB[a].raridade]);
+    }
 
     // Adiciona equipamentos na mochila
     itemsMochila.forEach(eqId => {
@@ -2593,13 +2607,9 @@ if (filterSelect && filterSelect.value === 'alpha') {
         mochilaContainer.appendChild(sep);
 
         let poderesAgrupados = {};
-        // Localize onde os poderes são adicionados à mochila:
-poderesMochila.forEach(pid => {
-    const templatePoder = poderesDB[pid];
-    if (!templatePoder) return; // Pula se o ID não existir no banco de dados
-
-    poderesAgrupados[pid] = (poderesAgrupados[pid] || 0) + 1;
-});
+        poderesMochila.forEach(pid => {
+            poderesAgrupados[pid] = (poderesAgrupados[pid] || 0) + 1;
+        });
 
         Object.keys(poderesAgrupados).forEach(pid => {
             const qtde = poderesAgrupados[pid];
@@ -2755,12 +2765,14 @@ function ganharXP(amount) {
 
         // Milestone a cada 5 níveis: ganha um poder aleatório do nível
         if (level % 5 === 0) {
-            const poderesMilestone = Object.values(poderesDB).filter(p => p.raridade === 'incomum');
+            const poderesMilestone = Object.values(poderesDB).filter(p => p && p.raridade === 'incomum');
             if (poderesMilestone.length > 0) {
                 const pGanho = poderesMilestone[Math.floor(Math.random() * poderesMilestone.length)];
-                poderesInventario.push(pGanho.id);
-                criarFloatingText("Nível " + level + ": " + pGanho.nome, canvas.width/2, canvas.height/2);
-                renderizarInventario();
+                if (pGanho && pGanho.id) {
+                    poderesInventario.push(pGanho.id);
+                    criarFloatingText("Nível " + level + ": " + pGanho.nome, canvas.width/2, canvas.height/2);
+                    renderizarInventario();
+                }
             }
         }
     }
